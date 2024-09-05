@@ -9,8 +9,9 @@ namespace ADEV {
 class ControlGroupObserver : public QObject
 {
     Q_OBJECT
-public:
-    explicit ControlGroupObserver(ItemShaper* itemShaper, ControlPointGroup* controlGroup);
+public: // 构造、析构和其他方法
+    explicit ControlGroupObserver(ItemShaper* itemShaper);
+    void setControlGroup(ControlPointGroup* controlGroup);
 
 public slots:
     // 处理m_controlGroup发出的rectInfo的槽函数，

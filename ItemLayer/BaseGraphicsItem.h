@@ -31,7 +31,7 @@ public: // 重写QGraphicsItem的一些方法
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 public: // 构造、析构以及一些业务逻辑方法
-    explicit BaseGraphicsItem(qreal strokeWidth, const QBrush& brush);
+    explicit BaseGraphicsItem(qreal strokeWidth, const QBrush& brush, QGraphicsItem* parent = nullptr);
     QList<QPainterPath> handleCollides(const QPainterPath& path); // 该方法用于满足擦除的业务逻辑
 
 private: // 私有成员变量的声明

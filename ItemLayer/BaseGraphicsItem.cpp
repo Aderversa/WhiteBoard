@@ -5,8 +5,9 @@
 namespace ADEV
 {
 
-BaseGraphicsItem::BaseGraphicsItem(qreal strokeWidth, const QBrush& brush)
-    : m_strokeWidth(strokeWidth)
+BaseGraphicsItem::BaseGraphicsItem(qreal strokeWidth, const QBrush& brush, QGraphicsItem* parent)
+    : QGraphicsItem{parent}
+    , m_strokeWidth(strokeWidth)
     , m_brush(brush)
 {
     m_pen.setStyle(Qt::NoPen);

@@ -12,6 +12,7 @@ SOURCES += \
     ItemLayer/BaseGraphicsItem.cpp \
     ItemLayer/ControlGroupObserver.cpp \
     ItemLayer/ControlPointGroup.cpp \
+    ItemLayer/ControlPointItem.cpp \
     main.cpp \
     WhiteBoard.cpp
 
@@ -19,6 +20,7 @@ HEADERS += \
     ItemLayer/BaseGraphicsItem.h \
     ItemLayer/ControlGroupObserver.h \
     ItemLayer/ControlPointGroup.h \
+    ItemLayer/ControlPointItem.h \
     ItemLayer/ItemShaper.h \
     WhiteBoard.h
 
