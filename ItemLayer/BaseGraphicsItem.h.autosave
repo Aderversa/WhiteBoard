@@ -1,0 +1,36 @@
+#ifndef BASEGRAPHICSITEM_H
+#define BASEGRAPHICSITEM_H
+
+#include "ItemLayer/ItemShaper.h"
+
+#include <QGraphicsItem>
+
+namespace ADEV
+{
+
+class BaseGraphicsItem : public ItemShaper, public QGraphicsItem
+{
+public: // 实现ItemShaper接口
+    qreal strokeWidth() const;
+    void setStrokePath(const QPainterPath &path);
+    QPainterPath lineToStroke(const QLineF &line, qreal width) const;
+    
+public: // 提供一些成员变量的Getter和Setter
+    QPen pen() const; // pen不可获取，构造时决定其状态
+    QBrush brush() const;
+    void setBrush(QBrush brush);
+    
+public: // 重写QGraphicsItem的一些方法
+    c
+    
+    
+private: // 私有成员变量的声明
+    QPainterPath m_strokePath;
+    qreal m_strokeWidth;
+    QPen m_pen;
+    QBrush m_brush;
+};
+
+}
+
+#endif // BASEGRAPHICSITEM_H

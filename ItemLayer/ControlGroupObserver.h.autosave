@@ -1,0 +1,22 @@
+#ifndef CONTROLGROUPOBSERVER_H
+#define CONTROLGROUPOBSERVER_H
+
+#include "ItemLayer/ItemShaper.h"
+#include "ItemLayer/ControlPointGroup.h"
+
+namespace ADEV {
+
+class ControlGroupObserver
+{
+public slots:
+    virtual void formItem(QRectF rect, qreal angle) = 0;
+    virtual void handleCont 
+    
+private:
+    ItemShaper* m_itemShaper;
+    ControlPointGroup* m_controlGroup;
+};
+
+} // end of namespace ADEV
+
+#endif // CONTROLGROUPOBSERVER_H

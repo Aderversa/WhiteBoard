@@ -9,12 +9,17 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    ItemLayer/DotPolygonItem.cpp \
+    ItemLayer/BaseGraphicsItem.cpp \
+    ItemLayer/ControlGroupObserver.cpp \
+    ItemLayer/ControlPointGroup.cpp \
     main.cpp \
     WhiteBoard.cpp
 
 HEADERS += \
-    ItemLayer/DotPolygonItem.h \
+    ItemLayer/BaseGraphicsItem.h \
+    ItemLayer/ControlGroupObserver.h \
+    ItemLayer/ControlPointGroup.h \
+    ItemLayer/ItemShaper.h \
     WhiteBoard.h
 
 # Default rules for deployment.

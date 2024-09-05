@@ -1,9 +1,8 @@
-#ifndef DOTPOLYGONITEM_H
-#define DOTPOLYGONITEM_H
+#ifndef BASEGRAPHICSITEM_H
+#define BASEGRAPHICSITEM_H
 
 #include <QAbstractGraphicsShapeItem>
-class QBrush;
-class QRadialGradient;
+#include <QBrush>
 
 namespace ADEV
 {
@@ -16,12 +15,14 @@ public:
                             qreal opacity,
                             bool openLaserMode = false,
                             QGraphicsItem* parent = nullptr);
+    explicit DotPolygonItem(const DotPolygonItem& that);
     ~DotPolygonItem();
     QRectF boundingRect() const override;
     QPainterPath shape() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void setColor(QColor color);
     void setRadius(qreal radius);
+    qreal getRadius() const {return m_radius;}
 
 private:
     QColor m_color;
@@ -30,11 +31,10 @@ private:
     // 激光模式，中心为白色，周围有m_color颜色的阴影
     bool m_openLaserMode;
 
-    QBrush* m_foreBrush = nullptr;
-    QBrush* m_backBrush = nullptr;
-    QRadialGradient* m_radialGradient = nullptr;
+    QBrush m_foreBrush;
+    QBrush m_backBrush;
 };
 
 }
 
-#endif // DOTPOLYGONITEM_H
+#endif // BASEGRAPHICSITEM_H
