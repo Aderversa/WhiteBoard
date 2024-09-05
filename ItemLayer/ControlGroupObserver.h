@@ -1,50 +1,32 @@
 #ifndef CONTROLGROUPOBSERVER_H
 #define CONTROLGROUPOBSERVER_H
 
-#include "WhiteBoardItem.h"
-#include <QSharedPointer>
-#include <QScopedPointer>
+#include "ItemLayer/ItemShaper.h"
+#include "ItemLayer/ControlPointGroup.h"
 
 namespace ADEV {
 
-class RectangleItem : public WhiteBoardItem
+class ControlGroupObserver : public QObject
 {
+    Q_OBJECT
 public:
-    RectangleItem(const QPointF& start,
-                  const QPointF& end,
-                  const DotPolygonItem& prototype,
-                  WhiteBoardItem* parent = nullptr);
+    explicit ControlGroupObserver(ItemShaper* itemShaper, ControlPointGroup* controlGroup);
 
-    QRectF boundingRect() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+public slots:
+    // 处理m_controlGroup发出的rectInfo的槽函数，
+    // 负责处理矩形信息，然后将变化映射到m_itemShaper中
+    virtual void formItem(QRectF rect, qreal angle) = 0;
 
-private:
-    // 必须保证不能修改这个对象，只能进行读取操作
-    DotPolygonItem m_dotPrototype;
-    ControlDotItem* m_leftTop;
-    ControlDotItem* m_rightTop;
-    ControlDotItem* m_leftBottom;
-    ControlDotItem* m_rightBottom;
-    ControlDotItem* m_leftMid;
-    ControlDotItem* m_rightMid;
-    ControlDotItem* m_topMid;
-    ControlDotItem* m_bottomMid;
+    // 在m_controlGroup发出destroy信号后对其进行回收操作，
+    // 并发出自己的destroy信号让外界回收自己
+    void handleControlPointDestroy();
 
-protected:
+signals:
+    void destroy();
 
 private:
-    void resetMidControlDot();
-    void adjustShape();
-
-private slots:
-    void leftTopMove(QPointF diff);
-    void leftBottomMove(QPointF diff);
-    void rightTopMove(QPointF diff);
-    void rightBottomMove(QPointF diff);
-    void leftMidMove(QPointF diff);
-    void rightMidMove(QPointF diff);
-    void topMidMove(QPointF diff);
-    void bottomMidMove(QPointF diff);
+    ItemShaper* m_itemShaper;
+    ControlPointGroup* m_controlGroup;
 };
 
 } // end of namespace ADEV
