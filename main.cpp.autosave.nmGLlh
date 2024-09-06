@@ -7,17 +7,17 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QDebug>
-#include <iostream>
 
 int main(int argc, char *argv[])
 {
     using namespace ADEV;
     QApplication a(argc, argv);
     EightWayMovementGroup eightWayMovement(QRectF(QPointF(100, 100), QPointF(200, 200)));
-    BaseGraphicsItem baseItem(10, QBrush(Qt::red));
+    BaseGraphicsItem baseItem;
     ControlRectangleObserver rectangleObserver(&baseItem);
-    rectangleObserver.formItem(eightWayMovement.mapRectToScene(eightWayMovement.boundingRect()), 0.0);
+    rectangleObserver.formItem(QRectF(QPointF(100, 100), QPointF(200, 200)), 0.0);
     rectangleObserver.setControlGroup(&eightWayMovement);
+    QObject::connect(&rectangleObserver, &Ei)
     QGraphicsScene scene;
     scene.setSceneRect(0, 0, 1024, 512);
     scene.addItem(&baseItem);

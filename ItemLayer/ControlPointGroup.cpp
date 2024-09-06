@@ -255,7 +255,7 @@ void EightWayMovementGroup::updateControlGroup()
 {
     recalculateAllMidPoint();
     scene()->update();
-    emit rectInfo(boundingRect(), 0.0);
+    emit rectInfo(mapRectToScene(boundingRect()), 0.0);
 }
 // end of EightWayMovementGroup
 }// end of namespace ADEV

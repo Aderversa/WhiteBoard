@@ -26,7 +26,7 @@ signals: // 发出的信号
     void posMove(qreal dx, qreal dy);
 
 private:
-    constexpr static qreal WIDTH = 4;
+    constexpr static qreal WIDTH = 5;
     QPen m_pen;
     QBrush m_brush;
 };

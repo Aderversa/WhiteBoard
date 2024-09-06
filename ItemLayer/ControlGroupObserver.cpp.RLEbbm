@@ -10,7 +10,7 @@ ControlGroupObserver::ControlGroupObserver(ItemShaper *itemShaper)
 ControlGroupObserver::~ControlGroupObserver()
 {}
 
-void ControlGroupObserver::setControlGroup(ControlPointGroup *controlGroup)
+ControlGroupObserver::setControlGroup(ControlPointGroup *controlGroup)
 {
     m_controlGroup = controlGroup;
     connect(m_controlGroup, &ControlPointGroup::rectInfo,

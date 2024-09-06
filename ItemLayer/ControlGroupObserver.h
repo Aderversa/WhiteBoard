@@ -11,7 +11,9 @@ class ControlGroupObserver : public QObject
     Q_OBJECT
 public: // 构造、析构和其他方法
     explicit ControlGroupObserver(ItemShaper* itemShaper);
+    virtual ~ControlGroupObserver();
     void setControlGroup(ControlPointGroup* controlGroup);
+    ItemShaper* itemShaper() const;
 
 public slots:
     // 处理m_controlGroup发出的rectInfo的槽函数，
@@ -28,6 +30,16 @@ signals:
 private:
     ItemShaper* m_itemShaper;
     ControlPointGroup* m_controlGroup;
+};
+
+class ControlRectangleObserver : public ControlGroupObserver
+{
+    Q_OBJECT
+public:
+    ControlRectangleObserver(ItemShaper* itemShaper);
+
+public slots:
+    void formItem(QRectF rect, qreal angle) override final;
 };
 
 } // end of namespace ADEV
