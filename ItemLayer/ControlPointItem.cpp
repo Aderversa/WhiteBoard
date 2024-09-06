@@ -19,10 +19,8 @@ ControlPointItem::ControlPointItem(const QPointF &pos, QGraphicsItem* parent)
 // 重写QGraphicsItem的一些方法
 QRectF ControlPointItem::boundingRect() const
 {
-    qreal x = pos().x();
-    qreal y = pos().y();
     qreal d = WIDTH / 2;
-    return QRectF(QPointF(x - d, y - d), QPointF(x + d, x + d));
+    return QRectF(QPointF(-d, -d), QPointF(d, d));
 }
 
 void ControlPointItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

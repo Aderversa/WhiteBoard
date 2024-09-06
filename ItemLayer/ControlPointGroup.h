@@ -11,6 +11,7 @@ class ControlPointGroup : public QObject, public QGraphicsItem
 {
     Q_OBJECT
 public:
+    virtual ~ControlPointGroup() = default;
     ControlPointGroup(QGraphicsItem* parent = nullptr);
 
 signals: // 为其子类定义好信号
@@ -23,6 +24,7 @@ signals: // 为其子类定义好信号
 
 class EightWayMovementGroup : public ControlPointGroup
 {
+    Q_OBJECT
 public slots: // 控制点移动逻辑处理的槽
     void leftMidMove(qreal dx, qreal dy);
     void topLeftMove(qreal dx, qreal dy);
@@ -38,12 +40,19 @@ private slots: // 初始聚焦后失焦的处理逻辑，这里的聚焦指的�
 
 public: // 重写来自QGraphicsItem的一些方法
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+    QRectF boundingRect() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 public: // 构造和析构
     EightWayMovementGroup(const QRectF& rect, QGraphicsItem* parent = nullptr);
+    ~EightWayMovementGroup();
 
-private:
+private: // 一些辅助函数
     bool isChildControlPointItem(ControlPointItem* item);
+    void recalculateAllMidPoint();
+    void updateControlGroup();
+
+private: // 私有成员变量
     ControlPointItem* m_leftMid;
     ControlPointItem* m_topLeft;
     ControlPointItem* m_topMid;
