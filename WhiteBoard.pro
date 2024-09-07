@@ -13,6 +13,7 @@ SOURCES += \
     ItemLayer/ControlGroupObserver.cpp \
     ItemLayer/ControlPointGroup.cpp \
     ItemLayer/ControlPointItem.cpp \
+    SceneLayer/BackgroundItem.cpp \
     main.cpp \
     WhiteBoard.cpp
 
@@ -22,9 +23,13 @@ HEADERS += \
     ItemLayer/ControlPointGroup.h \
     ItemLayer/ControlPointItem.h \
     ItemLayer/ItemShaper.h \
+    SceneLayer/BackgroundItem.h \
     WhiteBoard.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    res.qrc
