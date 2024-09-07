@@ -18,7 +18,6 @@ ControlPointGroup::ControlPointGroup(QGraphicsItem *parent)
 EightWayMovementGroup::EightWayMovementGroup(const QRectF& rect, QGraphicsItem* parent)
     : ControlPointGroup{parent}
 {
-    setPos(rect.center());
     setFlags(QGraphicsItem::ItemIsFocusable | QGraphicsItem::ItemIsSelectable);
     m_leftMid     = new ControlPointItem((rect.topLeft() + rect.bottomLeft()) / 2, this);
     m_topLeft     = new ControlPointItem(rect.topLeft(), this);
@@ -64,6 +63,11 @@ EightWayMovementGroup::EightWayMovementGroup(const QRectF& rect, QGraphicsItem* 
 
 EightWayMovementGroup::~EightWayMovementGroup()
 {
+    if (scene()) {
+        QGraphicsScene* s = scene();
+        scene()->removeItem(this);
+        s->update();
+    }
 #define ADEV_DELETE(v) if (v) delete v;
 
     ADEV_DELETE(m_leftMid);
@@ -212,7 +216,7 @@ void EightWayMovementGroup::handleFocusItemChanged(QGraphicsItem *newFocusItem, 
         m_bottomRight->hide();
         m_bottomMid->hide();
         m_bottomLeft->hide();
-        emit destroy();
+        emit needToDestroy();
     }
 }
 
@@ -240,7 +244,12 @@ void EightWayMovementGroup::paint(QPainter *painter, const QStyleOptionGraphicsI
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    Q_UNUSED(painter);
+    QPen pen(Qt::DashLine);
+    pen.setColor(Qt::white);
+    pen.setWidth(2);
+    painter->setPen(pen);
+    painter->setBrush(QBrush(Qt::NoBrush));
+    painter->drawRect(boundingRect());
 }
 
 void EightWayMovementGroup::recalculateAllMidPoint()

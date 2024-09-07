@@ -25,7 +25,7 @@ public slots:
     void handleControlPointDestroy();
 
 signals:
-    void destroy();
+    void needToDestroy();
 
 private:
     ItemShaper* m_itemShaper;
@@ -40,6 +40,25 @@ public:
 
 public slots:
     void formItem(QRectF rect, qreal angle) override final;
+};
+
+class ControlCurveObserver : public ControlGroupObserver
+{
+    Q_OBJECT
+public:
+    ControlCurveObserver(ItemShaper* itemShaper);
+
+public slots:
+    void formItem(QRectF rect, qreal angle) override final;
+
+    // 独属于ControlCurveObserver的槽函数。
+    // ControlCurveObserver在创建时即被绑定这个槽函数，所以不需要担心接口问题。
+    // 后续利用到其父类指针都是用来回收其本身的资源的。
+    void addPointToCurve(QPointF point);
+
+private:
+    bool m_isTheFirstPoint = true;
+    QPointF m_lastPoint;
 };
 
 } // end of namespace ADEV

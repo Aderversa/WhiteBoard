@@ -16,13 +16,13 @@ public: // 实现ItemShaper接口
     qreal strokeWidth() const;
     void setStrokePath(const QPainterPath &path);
     QPainterPath lineToStroke(const QLineF &line, qreal width) const;
+    QPainterPath strokePath() const;
 
 public: // 提供一些成员变量的Getter和Setter
     QPen pen() const;
     QBrush brush() const;
     void setBrush(const QBrush& brush);
     void setStrokeWidth(qreal width);
-    QPainterPath strokePath() const;
 
 public: // 重写QGraphicsItem的一些方法
     QRectF boundingRect() const;

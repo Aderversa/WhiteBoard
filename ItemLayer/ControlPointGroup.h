@@ -19,7 +19,7 @@ signals: // 为其子类定义好信号
     void rectInfo(QRectF rect, qreal angle);
 
     // 子类需要在自身和其子项失去焦点时，发出destroy信号，通知外界回收
-    void destroy();
+    void needToDestroy();
 };
 
 class EightWayMovementGroup : public ControlPointGroup

@@ -11,6 +11,7 @@ public:
     virtual ~ItemShaper() = default;
     virtual qreal strokeWidth() const = 0;
     virtual void setStrokePath(const QPainterPath& path) = 0;
+    virtual QPainterPath strokePath() const = 0;
     virtual QPainterPath lineToStroke(const QLineF& line, qreal width) const = 0;
 };
 

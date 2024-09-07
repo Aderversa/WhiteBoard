@@ -10,10 +10,11 @@ ControlPointItem::ControlPointItem(const QPointF &pos, QGraphicsItem* parent)
     : QGraphicsItem{parent}
 {
     setPos(pos);
-    setZValue(parent->zValue() + 1);
+    setFlags(QGraphicsItem::ItemIsFocusable | QGraphicsItem::ItemIsSelectable);
     m_pen.setColor(Qt::blue);
     m_pen.setWidth(2);
-    m_brush.setColor(Qt::blue);
+    m_brush.setStyle(Qt::SolidPattern);
+    m_brush.setColor(Qt::white);
 }
 // end of 构造和析构
 // ----------------------------------------------------------------------
