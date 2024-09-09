@@ -11,11 +11,18 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     , m_backgroundItem(background)
     , m_undoStack(new QUndoStack)
 {
+    initNormalPen();
+    initHighlightPen();
+    initLaserPen();
+    initEraser();
     if (m_backgroundItem == nullptr)
     {
         // 这里默认的大小应该由配置文件指定的，固定在配置文件上用户一般不可以更改
-        m_backgroundItem = new BackgroundItem(Qt::white, QSizeF(1024, 512));
+        m_backgroundItem = new BackgroundItem(Qt::black, QSizeF(1024, 512));
     }
+    // backgroundItem属于Scene的属性，不能够将其归类管理
+    this->addItem(m_backgroundItem);
+    m_nowUseTool = WhiteBoardTool::NormalPen;
 }
 
 WhiteBoardScene::~WhiteBoardScene()
@@ -147,22 +154,22 @@ void WhiteBoardScene::setEraser(const WhiteBoardEraser& eraser)
     m_eraser = eraser;
 }
 
-WhiteBoardNormalPen WhiteBoardScene::normalPen()
+WhiteBoardNormalPen WhiteBoardScene::normalPen() const
 {
     return m_normalPen;
 }
 
-WhiteBoardHighlightPen WhiteBoardScene::hightlightPen()
+WhiteBoardHighlightPen WhiteBoardScene::hightlightPen() const
 {
     return m_highlightPen;
 }
 
-WhiteBoardLaserPen WhiteBoardScene::laserPen()
+WhiteBoardLaserPen WhiteBoardScene::laserPen() const
 {
     return m_laserPen;
 }
 
-WhiteBoardEraser WhiteBoardScene::eraser()
+WhiteBoardEraser WhiteBoardScene::eraser() const
 {
     return m_eraser;
 }
@@ -184,9 +191,9 @@ void WhiteBoardScene::initHighlightPen()
 {
     // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
     // 后续扩展了配置类的时候再回来对此处进行优化
-    m_highlightPen.color = Qt::yellow;
-    m_highlightPen.width = 10;
-    m_highlightPen.opacity = 0.7;
+    m_highlightPen.color = Qt::darkYellow;
+    m_highlightPen.width = 40;
+    m_highlightPen.opacity = 0.5;
     m_highlightPen.openStraightLineMode = false;
 }
 

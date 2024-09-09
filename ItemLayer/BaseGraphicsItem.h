@@ -23,6 +23,7 @@ public:
         QBrush brush;
         qreal width;
         QPainterPath strokePath;
+        qreal zValue;
     };
     Memento save(); // 保存当前
     void restore(const Memento& memento);

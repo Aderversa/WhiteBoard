@@ -1,6 +1,7 @@
 #include "BaseGraphicsItem.h"
 
 #include <QPainter>
+#include <QGraphicsScene>
 
 namespace ADEV
 {
@@ -22,6 +23,7 @@ qreal BaseGraphicsItem::strokeWidth() const
 void BaseGraphicsItem::setStrokePath(const QPainterPath &path)
 {
     m_strokePath = path;
+    this->scene()->update();
 }
 
 QPainterPath BaseGraphicsItem::lineToStroke(const QLineF &line, qreal width) const
@@ -142,6 +144,7 @@ BaseGraphicsItem::Memento BaseGraphicsItem::Memento::save(const BaseGraphicsItem
     memento.brush = item.m_brush;
     memento.strokePath = item.m_strokePath;
     memento.opacity = item.opacity();
+    memento.zValue = item.zValue();
     return memento;
 }
 
@@ -151,6 +154,7 @@ void BaseGraphicsItem::Memento::restore(const Memento& memento,BaseGraphicsItem 
     item.m_strokeWidth = memento.width;
     item.m_strokePath = memento.strokePath;
     item.setOpacity(memento.opacity);
+    item.setZValue(memento.zValue);
 }
 
 BaseGraphicsItem::Memento BaseGraphicsItem::save()

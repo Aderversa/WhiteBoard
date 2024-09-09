@@ -2,6 +2,9 @@
 
 #include <QApplication>
 #include <QPdfView>
+#include "SceneLayer/WhiteBoardScene.h"
+#include "ViewLayer/WhiteBoardView.h"
+#include <QGraphicsView>
 
 // EightWayMovementGroup, BaseGraphicsItem, ControlRectangleObserver的集成测试
 int testForBase(int argc, char *argv[])
@@ -59,13 +62,10 @@ int main(int argc, char** argv)
 {
     using namespace ADEV;
     QApplication a(argc, argv);
-    QList<Integer> arr;
-    arr << Integer{.i = 10};
-    arr << Integer{.i = 20};
-    arr << Integer{.i = 30};
-    arr << Integer{.i = 40};
-    for (auto it = arr.rbegin(); it != arr.rend(); ++it) {
-        qDebug() << (*it).i;
-    }
+    QImage image(QString(":/BackgroundImages/3.png"));
+    BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());
+    WhiteBoardScene scene(backgroundItem);
+    WhiteBoardView view(&scene);
+    view.show();
     return a.exec();
 }

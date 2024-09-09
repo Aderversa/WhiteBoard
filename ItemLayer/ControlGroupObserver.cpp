@@ -89,4 +89,27 @@ void ControlCurveObserver::formItem(QRectF rect, qreal angle)
 }
 // end of ControlCurveObserver
 // ----------------------------------------------------------------------
+// ControlLineObserver
+ControlLineObserver::ControlLineObserver(ItemShaper* itemShaper)
+    : ControlCurveObserver(itemShaper)
+{}
+
+void ControlLineObserver::addPointToCurve(QPointF point)
+{
+    QPainterPath path;
+    if (m_isTheFirstPoint)
+    {
+        m_lastPoint = point;
+        path = itemShaper()->lineToStroke(QLineF(point, point), itemShaper()->strokeWidth());
+        m_isTheFirstPoint = false;
+    }
+    else
+    {
+        // m_lastPoint作为初始点不需要更新
+        path = itemShaper()->lineToStroke(QLineF(m_lastPoint, point), itemShaper()->strokeWidth());
+    }
+    itemShaper()->setStrokePath(path);
+}
+// end of ControlCurveObserver
+// ----------------------------------------------------------------------
 } // end of namespace ADEV

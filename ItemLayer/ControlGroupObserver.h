@@ -47,6 +47,7 @@ class ControlCurveObserver : public ControlGroupObserver
     Q_OBJECT
 public:
     ControlCurveObserver(ItemShaper* itemShaper);
+    virtual ~ControlCurveObserver() = default;
 
 public slots:
     void formItem(QRectF rect, qreal angle) override final;
@@ -54,11 +55,19 @@ public slots:
     // 独属于ControlCurveObserver的槽函数。
     // ControlCurveObserver在创建时即被绑定这个槽函数，所以不需要担心接口问题。
     // 后续利用到其父类指针都是用来回收其本身的资源的。
-    void addPointToCurve(QPointF point);
+    virtual void addPointToCurve(QPointF point);
 
-private:
+protected:
     bool m_isTheFirstPoint = true;
     QPointF m_lastPoint;
+};
+
+class ControlLineObserver : public ControlCurveObserver // 直线也是一种特殊的曲线
+{
+    Q_OBJECT
+public:
+    ControlLineObserver(ItemShaper* itemShaper);
+    void addPointToCurve(QPointF point);
 };
 
 } // end of namespace ADEV

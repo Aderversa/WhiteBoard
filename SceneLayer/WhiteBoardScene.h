@@ -2,7 +2,11 @@
 #define WHITEBOARDSCENE_H
 
 #include <QGraphicsScene>
+#include "SceneLayer/BasicCommand.h"
 #include "SceneLayer/WhiteBoardTools.h"
+#include "ItemLayer/BaseGraphicsItem.h"
+#include "ItemLayer/ControlGroupObserver.h"
+#include "SceneLayer/BackgroundItem.h"
 
 class QUndoStack;
 
@@ -17,6 +21,12 @@ public:
     // 若背景指定为空则采用默认实现
     WhiteBoardScene(BackgroundItem* background = nullptr);
     ~WhiteBoardScene();
+
+private: // 用于标识某个工具的处理方法的Tag，专门用来定位模板方法的实现
+    struct NormalPenTag {};
+    struct HightlightPenTag {};
+    struct LaserPenTag {};
+    struct EraserTag {};
 
 public: // 抽象的设备事件处理
     void inputDevicePress(const QPointF& startPos);
@@ -78,15 +88,13 @@ private:  // 利用配置对象初始化工具的方法
     void initLaserPen();
     void initEraser();
 
-private: // 用于标识某个工具的处理方法的Tag，专门用来定位模板方法的实现
-    struct NormalPenTag {};
-    struct HightlightPenTag {};
-    struct LaserPenTag {};
-    struct EraserTag {};
 
 private:
     BackgroundItem* m_backgroundItem;
     QUndoStack* m_undoStack;
+
+    BaseGraphicsItem* m_eventTempItem = nullptr;
+    ControlCurveObserver* m_curveObserver = nullptr;
 
     WhiteBoardTool m_nowUseTool; // 标志现在使用的工具
     WhiteBoardNormalPen  m_normalPen;
@@ -100,13 +108,34 @@ private:
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, NormalPenTag)
 {
-
+    m_eventTempItem = new BaseGraphicsItem(m_normalPen.width, QBrush(m_normalPen.color));
+    m_eventTempItem->setZValue(m_backgroundItem->zValue()  + 1);
+    // 添加操作使用Command进行
+    AddItemCommand* command = new AddItemCommand(this, m_eventTempItem);
+    m_undoStack->push(command); // add操作真正执行是在push方法内
+    m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+    // 后面的QSizeF是随便给的，因为我知道ControlCurveObserver在其formItem只处理leftTop点
+    m_curveObserver->addPointToCurve(startPos);
 }
 
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
 {
-
+    m_eventTempItem = new BaseGraphicsItem(m_highlightPen.width, QBrush(m_highlightPen.color));
+    m_eventTempItem->setZValue(m_backgroundItem->zValue()  + 1);
+    m_eventTempItem->setOpacity(m_highlightPen.opacity);
+    // 添加操作使用Command进行
+    AddItemCommand* command = new AddItemCommand(this, m_eventTempItem);
+    m_undoStack->push(command); // add操作真正执行是在push方法内
+    if (!m_highlightPen.openStraightLineMode)
+    {
+        m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+    }
+    else
+    {
+        m_curveObserver = new ControlLineObserver(m_eventTempItem);
+    }
+    m_curveObserver->addPointToCurve(startPos);
 }
 
 template<typename T>
@@ -124,13 +153,15 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, EraserTag)
 template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, NormalPenTag)
 {
-
+    Q_UNUSED(lastScenePos);
+    m_curveObserver->addPointToCurve(scenePos);
 }
 
 template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, HightlightPenTag)
 {
-
+    Q_UNUSED(lastScenePos);
+    m_curveObserver->addPointToCurve(scenePos);
 }
 
 template<typename T>
@@ -148,13 +179,26 @@ void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastSce
 template<typename T>
 void WhiteBoardScene::deviceRelease(NormalPenTag)
 {
-
+    // 同一时间只处理同一个工具的一套(press-move-release)流程，所以不用担心同步问题
+    if (m_curveObserver) {// 已经没有用了，需要释放
+        delete m_curveObserver;
+        m_curveObserver = nullptr;
+    }
+    // item已经在本次事件中塑造完成，后续交给Scene管理
+    // m_eventTempItem不再能操作已经塑造完成的Item
+    m_eventTempItem = nullptr;
 }
 
 template<typename T>
 void WhiteBoardScene::deviceRelease(HightlightPenTag)
 {
-
+    if (m_curveObserver) {
+        delete m_curveObserver;
+        m_curveObserver = nullptr;
+    }
+    // item已经在本次事件中塑造完成，后续交给Scene管理
+    // m_eventTempItem不再能操作已经塑造完成的Item
+    m_eventTempItem = nullptr;
 }
 
 template<typename T>
