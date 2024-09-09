@@ -39,7 +39,7 @@ private:
 class BackgroundImageItem : public BackgroundItem
 {
 public:
-    BackgroundImageItem(const QImage& image);
+    BackgroundImageItem(const QImage& image, const QSizeF& imageSize);
 
 public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);

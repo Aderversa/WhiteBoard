@@ -135,4 +135,32 @@ QList<QPainterPath> BaseGraphicsItem::handleCollides(const QPainterPath& path)
     return remainStrokes;
 }
 
+BaseGraphicsItem::Memento BaseGraphicsItem::Memento::save(const BaseGraphicsItem &item)
+{
+    Memento memento;
+    memento.width = item.m_strokeWidth;
+    memento.brush = item.m_brush;
+    memento.strokePath = item.m_strokePath;
+    memento.opacity = item.opacity();
+    return memento;
+}
+
+void BaseGraphicsItem::Memento::restore(const Memento& memento,BaseGraphicsItem &item)
+{
+    item.m_brush = memento.brush;
+    item.m_strokeWidth = memento.width;
+    item.m_strokePath = memento.strokePath;
+    item.setOpacity(memento.opacity);
+}
+
+BaseGraphicsItem::Memento BaseGraphicsItem::save()
+{
+    return Memento::save(*this);
+}
+
+void BaseGraphicsItem::restore(const Memento& memento)
+{
+    Memento::restore(memento, *this);
+}
+
 } // end of namespace ADEV

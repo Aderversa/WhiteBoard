@@ -12,6 +12,21 @@ namespace ADEV
 
 class BaseGraphicsItem : public ItemShaper, public QGraphicsItem
 {
+public:
+    class Memento {
+    public:
+        static Memento save(const BaseGraphicsItem& item);
+        static void restore(const Memento& memento, BaseGraphicsItem& item);
+
+    private:
+        qreal opacity;
+        QBrush brush;
+        qreal width;
+        QPainterPath strokePath;
+    };
+    Memento save(); // 保存当前
+    void restore(const Memento& memento);
+
 public: // 实现ItemShaper接口
     qreal strokeWidth() const;
     void setStrokePath(const QPainterPath &path);

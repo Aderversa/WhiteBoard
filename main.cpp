@@ -1,14 +1,7 @@
 #include "WhiteBoard.h"
-#include "ItemLayer/ControlPointGroup.h"
-#include "ItemLayer/BaseGraphicsItem.h"
-#include "ItemLayer/ControlGroupObserver.h"
-#include "SceneLayer/BackgroundItem.h"
 
 #include <QApplication>
-#include <QGraphicsScene>
-#include <QGraphicsView>
-#include <QDebug>
-#include <iostream>
+#include <QPdfView>
 
 // EightWayMovementGroup, BaseGraphicsItem, ControlRectangleObserver的集成测试
 int testForBase(int argc, char *argv[])
@@ -58,42 +51,21 @@ int testForCurve(int argc, char* argv[])
     return a.exec();
 }
 
+struct Integer{
+    int i;
+};
+
 int main(int argc, char** argv)
 {
     using namespace ADEV;
     QApplication a(argc, argv);
-    BaseGraphicsItem baseItem(3, QBrush(Qt::black));
-    ControlRectangleObserver* rectangleObserver = new ControlRectangleObserver(&baseItem);
-    QObject::connect(rectangleObserver, &ADEV::ControlRectangleObserver::needToDestroy, [=](){
-        qDebug() << "Destroy ControlRectangleObserver.";
-    });
-    // 模拟鼠标事件，本来是产出一个
-    QRectF rect(QPointF(100, 100), QPointF(200, 200));
-    rectangleObserver->formItem(rect, 0.0);
-    // 鼠标事件结束，后续可以使用EightWayMovementGroup进行调整
-    EightWayMovementGroup eightWayMovement(rect);
-    rectangleObserver->setControlGroup(&eightWayMovement);
-
-    BackgroundImageItem backgroundItem(QImage(QString(":/BackgroundImages/3.png")));
-    /*
-    QPainterPath path;
-    for (int i = 1; i <= 10; ++i)
-    {
-        path.moveTo(0, i * 100);
-        path.lineTo(500, i * 100);
+    QList<Integer> arr;
+    arr << Integer{.i = 10};
+    arr << Integer{.i = 20};
+    arr << Integer{.i = 30};
+    arr << Integer{.i = 40};
+    for (auto it = arr.rbegin(); it != arr.rend(); ++it) {
+        qDebug() << (*it).i;
     }
-
-    BackgroundPathItem backgroundItem(path);
-    backgroundItem.setColor(Qt::gray);
-    */
-
-    // 集成到Scene和View中看效果
-    QGraphicsScene scene;
-    scene.setSceneRect(0, 0, 1024, 512);
-    scene.addItem(&baseItem);
-    scene.addItem(&backgroundItem);
-    scene.addItem(&eightWayMovement);
-    QGraphicsView view(&scene);
-    view.show();
     return a.exec();
 }

@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets pdf pdfwidgets
 
 CONFIG += c++17
 
@@ -14,6 +14,8 @@ SOURCES += \
     ItemLayer/ControlPointGroup.cpp \
     ItemLayer/ControlPointItem.cpp \
     SceneLayer/BackgroundItem.cpp \
+    SceneLayer/BasicCommand.cpp \
+    SceneLayer/WhiteBoardTools.cpp \
     main.cpp \
     WhiteBoard.cpp
 
@@ -24,6 +26,8 @@ HEADERS += \
     ItemLayer/ControlPointItem.h \
     ItemLayer/ItemShaper.h \
     SceneLayer/BackgroundItem.h \
+    SceneLayer/BasicCommand.h \
+    SceneLayer/WhiteBoardTools.h \
     WhiteBoard.h
 
 # Default rules for deployment.

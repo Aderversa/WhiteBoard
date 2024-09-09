@@ -70,8 +70,8 @@ void BackgroundItem::changeSceneBackgroundColor(QColor color)
 // end of BackgroundItem
 
 // BackgroundImageItem
-BackgroundImageItem::BackgroundImageItem(const QImage& image)
-    : BackgroundItem(Qt::white, image.size().toSizeF())
+BackgroundImageItem::BackgroundImageItem(const QImage& image, const QSizeF& imageSize)
+    : BackgroundItem(Qt::white, imageSize)
     , m_image(image)
 {
 }
