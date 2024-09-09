@@ -15,6 +15,7 @@ SOURCES += \
     ItemLayer/ControlPointItem.cpp \
     SceneLayer/BackgroundItem.cpp \
     SceneLayer/BasicCommand.cpp \
+    SceneLayer/WhiteBoardScene.cpp \
     SceneLayer/WhiteBoardTools.cpp \
     main.cpp \
     WhiteBoard.cpp
@@ -27,6 +28,7 @@ HEADERS += \
     ItemLayer/ItemShaper.h \
     SceneLayer/BackgroundItem.h \
     SceneLayer/BasicCommand.h \
+    SceneLayer/WhiteBoardScene.h \
     SceneLayer/WhiteBoardTools.h \
     WhiteBoard.h
 

@@ -5,7 +5,16 @@
 
 namespace ADEV {
 
-struct WhiteBoardPen {
+enum class WhiteBoardTool
+{
+    NormalPen = 0,  // 普通的钢笔
+    HighlightPen,   // 荧光笔
+    LaserPen,       // 激光笔
+    Eraser,         // 橡皮擦
+    GraphcsiItemPen //用来绘制标准图元，如矩形、椭圆的笔
+};
+
+struct WhiteBoardNormalPen {
     qreal width;
     QColor color;
 };

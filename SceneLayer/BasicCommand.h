@@ -2,6 +2,7 @@
 #define BASICCOMMAND_H
 
 #include <QUndoCommand>
+#include <QUndoStack>
 #include <QPainterPath>
 
 class QGraphicsScene;
