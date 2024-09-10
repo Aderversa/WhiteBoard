@@ -3,6 +3,7 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <QDebug>
 
 namespace ADEV {
 
@@ -30,22 +31,18 @@ AddItemCommand& AddItemCommand::operator=(const AddItemCommand& command)
 
 AddItemCommand::~AddItemCommand()
 {
-    if (!m_isItemInScene) { // 不在Scene中，则需要进行释放
-        delete m_addedItem; // 需要保证这个Item是new创建的
-    }
+    delete m_addedItem;
 }
 
 void AddItemCommand::redo()  // 执行完后Item在Scene
 {
     m_scene->addItem(m_addedItem);
-    m_isItemInScene = true;
     m_scene->update();
 }
 
 void AddItemCommand::undo()  // 执行完之后Item不在Scene
 {
     m_scene->removeItem(m_addedItem);
-    m_isItemInScene = false;
     m_scene->update();
 }
 
@@ -60,22 +57,18 @@ DeleteItemCommand::DeleteItemCommand(QGraphicsScene* scene, BaseGraphicsItem* it
 
 DeleteItemCommand::~DeleteItemCommand()
 {
-    if (!m_isItemInScene) {
-        delete m_deletedItem;
-    }
+    delete m_deletedItem;
 }
 
 void DeleteItemCommand::redo()
 {
     m_scene->removeItem(m_deletedItem);
-    m_isItemInScene = false;
     m_scene->update();
 }
 
 void DeleteItemCommand::undo()
 {
     m_scene->addItem(m_deletedItem);
-    m_isItemInScene = true;
     m_scene->update();
 }
 
@@ -84,7 +77,7 @@ EraseItemCommand::EraseItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item
     , m_scene(scene)
     , m_erasedItem(item)
 {
-    QPainterPath path = m_erasedItem->shape();
+    QPainterPath path = m_erasedItem->mapToScene(m_erasedItem->shape());
     QList<QPolygonF> polygons = path.subtracted(collidesPath).toFillPolygons();
     BaseGraphicsItem::Memento memento = m_erasedItem->save();
     m_deleteItemCommand = new DeleteItemCommand(scene, m_erasedItem);
@@ -98,7 +91,7 @@ EraseItemCommand::EraseItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item
         newItem->restore(memento);
         newItem->setStrokePath(newPath); // 重置其path为分裂后的子path
         AddItemCommand* command = new AddItemCommand(m_scene, newItem); // 构造即command完成
-        m_addItemCommands << command;
+        m_addItemCommands.push_back(command);
     }
     // 这里不进行command的redo是因为后续将EraseItemCommand加入QUndoStack后
     // QUndoStack会在command入栈时自动将其执行一次`
@@ -106,7 +99,16 @@ EraseItemCommand::EraseItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item
     // 只有当release事件将EraseItemsCommand加入QUndoStack时，才会刷新
     // 这个command必须在初始化时即执行，以实时反馈Scene的变化
     // 在后面合成EraseItemsCommand的时候调用一次undo然后再加入QUndoStack以适配它
-    this->redo(); // 执行redo操作，让变化呈现在Scene上
+
+    // 执行redo操作，让变化呈现在Scene上
+    // 原始Item消失在Scene中
+    m_deleteItemCommand->redo();
+    // 重新浮现分裂后的Item
+    for (auto& command : m_addItemCommands)
+    {
+        command->redo();
+    }
+    m_scene->update();
 }
 
 EraseItemCommand::EraseItemCommand(const EraseItemCommand& command)
@@ -115,7 +117,6 @@ EraseItemCommand::EraseItemCommand(const EraseItemCommand& command)
     m_scene = command.m_scene;
     m_erasedItem = command.m_erasedItem;
     m_addItemCommands = command.m_addItemCommands;
-    m_isItemInScene = command.m_isItemInScene;
 }
 
 EraseItemCommand& EraseItemCommand::operator=(const EraseItemCommand& command)
@@ -123,7 +124,6 @@ EraseItemCommand& EraseItemCommand::operator=(const EraseItemCommand& command)
     m_scene = command.m_scene;
     m_erasedItem = command.m_erasedItem;
     m_addItemCommands = command.m_addItemCommands;
-    m_isItemInScene = command.m_isItemInScene;
     return *this;
 }
 
@@ -143,7 +143,7 @@ EraseItemCommand::~EraseItemCommand()
 void EraseItemCommand::redo()
 {
     // 原始Item消失在Scene中
-    m_scene->removeItem(m_erasedItem);
+    m_deleteItemCommand->redo();
     // 重新浮现分裂后的Item
     for (auto& command : m_addItemCommands)
     {
@@ -155,7 +155,7 @@ void EraseItemCommand::redo()
 void EraseItemCommand::undo()
 {
     // 原始的Item重现在Scene中
-    m_scene->addItem(m_erasedItem);
+    m_deleteItemCommand->undo();
     // 分裂后的Item消失在Scene中
     for (auto& command : m_addItemCommands)
     {
@@ -179,10 +179,9 @@ EraseItemsCommand::~EraseItemsCommand()
     }
 }
 
-void EraseItemsCommand::push(const EraseItemCommand& command)
+void EraseItemsCommand::push(EraseItemCommand* command)
 {
-    EraseItemCommand* newCommand = new EraseItemCommand(command);
-    m_eraseCommandList.push_back(newCommand);
+    m_eraseCommandList.push_back(command);
 }
 
 void EraseItemsCommand::redo()

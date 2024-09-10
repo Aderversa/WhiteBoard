@@ -43,11 +43,13 @@ public: // 提供一些成员变量的Getter和Setter
 public: // 重写QGraphicsItem的一些方法
     QRectF boundingRect() const;
     QPainterPath shape() const;
-    bool collidesWithPath(const QPainterPath &path, Qt::ItemSelectionMode mode) const;
+    bool collidesWithItem(const QGraphicsItem *other, Qt::ItemSelectionMode mode) const override;
+    bool collidesWithPath(const QPainterPath &path, Qt::ItemSelectionMode mode) const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 public: // 构造、析构以及一些业务逻辑方法
     explicit BaseGraphicsItem(qreal strokeWidth, const QBrush& brush, QGraphicsItem* parent = nullptr);
+    ~BaseGraphicsItem();
     QList<QPainterPath> handleCollides(const QPainterPath& path); // 该方法用于满足擦除的业务逻辑
 
 private: // 私有成员变量的声明

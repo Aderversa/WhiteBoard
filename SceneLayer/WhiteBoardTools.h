@@ -33,6 +33,7 @@ struct WhiteBoardLaserPen {
 struct WhiteBoardEraser {
     qreal radius;
     bool eraseWholeItem;
+    constexpr static qreal MIN_RADIUS = 10;
 };
 
 

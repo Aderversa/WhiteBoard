@@ -98,8 +98,6 @@ void BackgroundPathItem::paint(QPainter *painter, const QStyleOptionGraphicsItem
     QPen pen;
     pen.setColor(Qt::black);
     pen.setStyle(Qt::SolidLine);
-    painter->setPen(pen);
-    painter->drawPath(m_path);
 }
 // end of BackgroundPathItem
 } // end of namespace ADEV

@@ -34,6 +34,9 @@ public: // 抽象的设备事件处理
     void inputDeviceRelease();
 
 public: // 不同工具对Press事件的处理
+    // 这里我采用模板+Tag的方式定位到不同工具的处理函数，是为了获得一致的方法名
+    // 这里还有一种解决方案是使用不同名的函数来进行处理
+    // 没人规定你该使用什么方法，适合自己就好
     template<typename T = void> // 这个T没有任何意义
     void devicePress(const QPointF& startPos, NormalPenTag);
     template<typename T = void> // 这个T没有任何意义
@@ -62,6 +65,10 @@ public: // 不同工具对Release事件的处理
     void deviceRelease(LaserPenTag);
     template<typename T = void>
     void deviceRelease(EraserTag);
+
+public: // 碰撞处理
+    void handleCollidingItems(const QPainterPath& collidesArea);
+    void eraseCollidingWholeItems(const QPainterPath& collidesArea);
 
 public: // 对实际事件的处理
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -95,6 +102,7 @@ private:
 
     BaseGraphicsItem* m_eventTempItem = nullptr;
     ControlCurveObserver* m_curveObserver = nullptr;
+    EraseItemsCommand* m_eraseItemsCommand = nullptr;
 
     WhiteBoardTool m_nowUseTool; // 标志现在使用的工具
     WhiteBoardNormalPen  m_normalPen;
@@ -147,7 +155,30 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, LaserPenTag)
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, EraserTag)
 {
+    if (!m_eraser.eraseWholeItem)
+    {
+        m_eraseItemsCommand = new EraseItemsCommand;
+        m_eventTempItem = new BaseGraphicsItem(m_eraser.radius, QBrush(Qt::darkGray));
+        m_eventTempItem->setZValue(m_backgroundItem->zValue() + 2);
+        m_eventTempItem->setOpacity(0.6);
 
+        addItem(m_eventTempItem); // 临时Item不需要加入UndoStack
+        QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_eraser.radius);
+        // 橡皮擦是临时用来显示的Item，不需要使用Command
+        m_eventTempItem->setStrokePath(circle);
+
+        handleCollidingItems(m_eventTempItem->shape());
+    }
+    else
+    {
+        m_eventTempItem = new BaseGraphicsItem(m_eraser.MIN_RADIUS, QBrush(Qt::black));
+
+        addItem(m_eventTempItem); // 临时Item不需要加入UndoStack
+        QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_eraser.MIN_RADIUS);
+        m_eventTempItem->setStrokePath(circle);
+
+        eraseCollidingWholeItems(circle);
+    }
 }
 
 template<typename T>
@@ -173,7 +204,19 @@ void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastSce
 template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, EraserTag)
 {
-
+    // 定义空指针异常，防止意外的事件进行错误的处理
+    if (!m_eventTempItem) // 不知道什么原因，明明没有定义鼠标滚轮事件，滚动滚轮却会触发这个事件
+        return;
+    qreal radius;
+    if (!m_eraser.eraseWholeItem)
+        radius = m_eraser.radius;
+    else
+        radius = m_eraser.MIN_RADIUS;
+    QPainterPath track = m_eventTempItem->lineToStroke(QLineF(lastScenePos, scenePos), radius);
+    eraseCollidingWholeItems(track);
+    QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(scenePos, scenePos), radius);
+    m_eventTempItem->setStrokePath(circle);
+    this->update();
 }
 
 template<typename T>
@@ -210,7 +253,18 @@ void WhiteBoardScene::deviceRelease(LaserPenTag)
 template<typename T>
 void WhiteBoardScene::deviceRelease(EraserTag)
 {
-
+    if (m_eventTempItem) {
+        // QGraphicsItem的析构函数会考虑其父Item和Scene的关系断联操作
+        delete m_eventTempItem;
+        m_eventTempItem = nullptr;
+    }
+    if (!m_eraser.eraseWholeItem)
+    {
+        m_eraseItemsCommand->undo();
+        m_undoStack->push(m_eraseItemsCommand);
+        m_eraseItemsCommand = nullptr;
+    }
+    this->update();
 }
 
 } // end of namespace ADEV

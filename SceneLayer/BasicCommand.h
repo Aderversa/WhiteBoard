@@ -23,7 +23,6 @@ public:
 private:
     QGraphicsScene* m_scene;
     BaseGraphicsItem* m_addedItem;
-    bool m_isItemInScene;
 };
 
 class DeleteItemCommand : public QUndoCommand
@@ -37,7 +36,6 @@ public:
 private:
     QGraphicsScene* m_scene;
     BaseGraphicsItem* m_deletedItem;
-    bool m_isItemInScene;
 };
 
 class EraseItemCommand : public QUndoCommand
@@ -53,7 +51,6 @@ public:
 private:
     QGraphicsScene* m_scene;
     BaseGraphicsItem* m_erasedItem;
-    bool m_isItemInScene;
 
     DeleteItemCommand* m_deleteItemCommand;
     // AddItemCommand里面的Item由它自己的析构函数来确定是否释放
@@ -65,7 +62,7 @@ class EraseItemsCommand : public QUndoCommand
 public:
     EraseItemsCommand();
     ~EraseItemsCommand();
-    void push(const EraseItemCommand& command);
+    void push(EraseItemCommand* command);
     void redo() override;
     void undo() override;
 

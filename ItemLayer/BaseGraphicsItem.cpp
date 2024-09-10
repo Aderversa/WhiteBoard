@@ -14,6 +14,10 @@ BaseGraphicsItem::BaseGraphicsItem(qreal strokeWidth, const QBrush& brush, QGrap
     m_pen.setStyle(Qt::NoPen);
 }
 
+BaseGraphicsItem::~BaseGraphicsItem()
+{
+}
+
 // ItemShaper接口实现
 qreal BaseGraphicsItem::strokeWidth() const
 {
@@ -22,8 +26,11 @@ qreal BaseGraphicsItem::strokeWidth() const
 
 void BaseGraphicsItem::setStrokePath(const QPainterPath &path)
 {
+    this->prepareGeometryChange();
     m_strokePath = path;
-    this->scene()->update();
+    if (this->scene()) {
+        this->scene()->update();
+    }
 }
 
 QPainterPath BaseGraphicsItem::lineToStroke(const QLineF &line, qreal width) const
@@ -90,19 +97,23 @@ QPainterPath BaseGraphicsItem::strokePath() const
 // 重写QGraphicsItem的一些方法
 QRectF BaseGraphicsItem::boundingRect() const
 {
-    return m_strokePath.boundingRect();
+    return shape().boundingRect();
 }
 
 QPainterPath BaseGraphicsItem::shape() const
 {
-    return m_strokePath;
+    // m_strokePath是利用Scene的坐标来生成的
+    return mapFromScene(m_strokePath);
+}
+
+bool BaseGraphicsItem::collidesWithItem(const QGraphicsItem *other, Qt::ItemSelectionMode mode) const
+{
+    return QGraphicsItem::collidesWithItem(other, mode);
 }
 
 bool BaseGraphicsItem::collidesWithPath(const QPainterPath &path, Qt::ItemSelectionMode mode) const
 {
-    // BaseGraphicsItem::collidesWithPath()中，不再考虑mode，默认mode为Qt::IntersectsItemShape
-    Q_UNUSED(mode);
-    return m_strokePath.intersects(path);
+    return QGraphicsItem::collidesWithPath(path, mode);
 }
 
 void BaseGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

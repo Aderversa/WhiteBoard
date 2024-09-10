@@ -45,7 +45,7 @@ void WhiteBoardView::changeToLaserPen()
 
 void WhiteBoardView::changeToEraser()
 {
-
+    m_scene->selectTool(WhiteBoardTool::Eraser);
 }
 
 
