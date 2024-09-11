@@ -32,6 +32,7 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     connect(m_eraserBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToEraser);
     connect(m_undoBtn, &QPushButton::clicked, this, &WhiteBoardView::undo);
     connect(m_redoBtn, &QPushButton::clicked, this, &WhiteBoardView::redo);
+    connect(m_scene->undoStack(), &QUndoStack::indexChanged, this, &WhiteBoardView::printIndex);
 }
 
 void WhiteBoardView::changeToNormalPen()
@@ -62,6 +63,11 @@ void WhiteBoardView::undo()
 void WhiteBoardView::redo()
 {
     m_scene->undoStack()->redo();
+}
+
+void WhiteBoardView::printIndex(int index)
+{
+    qDebug() << index;
 }
 
 } // ADEV

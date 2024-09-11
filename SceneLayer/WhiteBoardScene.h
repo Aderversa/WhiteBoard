@@ -3,6 +3,10 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsBlurEffect>
+#include <QSharedPointer>
+#include <QWeakPointer>
+#include <QScopedPointer>
+#include <QMap>
 #include "SceneLayer/BasicCommand.h"
 #include "SceneLayer/WhiteBoardTools.h"
 #include "ItemLayer/BaseGraphicsItem.h"
@@ -21,15 +25,20 @@ class LaserStrokeTempList : public QObject
     Q_OBJECT
 public:
     LaserStrokeTempList(int countdownSecond);
-    void push(BaseGraphicsItem* laserStroke);
+    ~LaserStrokeTempList();
+    void push(const QSharedPointer<BaseGraphicsItem>& laserStroke);
     void startTimer();
+
+public slots:
+    // 工具改变需要立刻清除激光笔
+    void toolChanged(WhiteBoardTool tool);
 
 private slots:
     void handleTimeout();
 
 private:
-    QList<BaseGraphicsItem*> m_laserList;
-    QTimer* m_timer = nullptr;
+    QList<QSharedPointer<BaseGraphicsItem>> m_laserList;
+    QScopedPointer<QTimer> m_timer;
     int m_countdown;
     int m_countTimes = 0;
 };
@@ -41,6 +50,9 @@ public:
     // 若背景指定为空则采用默认实现
     WhiteBoardScene(BackgroundItem* background = nullptr);
     ~WhiteBoardScene();
+    void addItem(const QSharedPointer<BaseGraphicsItem>& pItem);
+    void addItem(QGraphicsItem* item);
+    QSharedPointer<BaseGraphicsItem> getItem(BaseGraphicsItem* pItem) ;
 
 private: // 用于标识某个工具的处理方法的Tag，专门用来定位模板方法的实现
     struct NormalPenTag {};
@@ -116,11 +128,15 @@ private:  // 利用配置对象初始化工具的方法
     void initLaserPen();
     void initEraser();
 
+signals:
+    void toolChanged(WhiteBoardTool tool);
+
 private:
     BackgroundItem* m_backgroundItem;
     QUndoStack* m_undoStack;
+    QMap<BaseGraphicsItem*, QWeakPointer<BaseGraphicsItem>> m_existItemMap;
 
-    BaseGraphicsItem* m_eventTempItem = nullptr;
+    QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
     ControlCurveObserver* m_curveObserver = nullptr;
     EraseItemsCommand* m_eraseItemsCommand = nullptr;
     LaserStrokeTempList m_laserItemTempList;
@@ -138,12 +154,12 @@ private:
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, NormalPenTag)
 {
-    m_eventTempItem = new BaseGraphicsItem(m_normalPen.width, QBrush(m_normalPen.color));
+    m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_normalPen.width, QBrush(m_normalPen.color)));
     m_eventTempItem->setZValue(m_backgroundItem->zValue()  + 1);
     // 添加操作使用Command进行
     AddItemCommand* command = new AddItemCommand(this, m_eventTempItem);
     m_undoStack->push(command); // add操作真正执行是在push方法内
-    m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+    m_curveObserver = new ControlCurveObserver(m_eventTempItem.data());
     // 后面的QSizeF是随便给的，因为我知道ControlCurveObserver在其formItem只处理leftTop点
     m_curveObserver->addPointToCurve(startPos);
 }
@@ -151,7 +167,8 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, NormalPenTag)
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
 {
-    m_eventTempItem = new BaseGraphicsItem(m_highlightPen.width, QBrush(m_highlightPen.color));
+    m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_highlightPen.width, QBrush(m_highlightPen.color)));
+    m_existItemMap[m_eventTempItem.data()] = m_eventTempItem.toWeakRef();
     m_eventTempItem->setZValue(m_backgroundItem->zValue()  + 1);
     m_eventTempItem->setOpacity(m_highlightPen.opacity);
     // 添加操作使用Command进行
@@ -159,11 +176,11 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
     m_undoStack->push(command); // add操作真正执行是在push方法内
     if (!m_highlightPen.openStraightLineMode)
     {
-        m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+        m_curveObserver = new ControlCurveObserver(m_eventTempItem.data());
     }
     else
     {
-        m_curveObserver = new ControlLineObserver(m_eventTempItem);
+        m_curveObserver = new ControlLineObserver(m_eventTempItem.data());
     }
     m_curveObserver->addPointToCurve(startPos);
 }
@@ -171,20 +188,19 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, LaserPenTag)
 {
-
-    m_eventTempItem = new BaseGraphicsItem(m_laserPen.FIXED_WIDTH, QBrush(Qt::white));
-    m_eventTempItem->setZValue(m_backgroundItem->zValue() + 2);
+    QSharedPointer<BaseGraphicsItem> laserItem(new BaseGraphicsItem(m_laserPen.FIXED_WIDTH, QBrush(Qt::white)));
+    laserItem->setZValue(m_backgroundItem->zValue() + 2);
     // 添加阴影效果
     QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect;
     effect->setOffset(0, 0);
     effect->setBlurRadius(15);
     effect->setColor(m_laserPen.color);
-    m_eventTempItem->setGraphicsEffect(effect);
-    addItem(m_eventTempItem);
+    laserItem->setGraphicsEffect(effect);
+    addItem(laserItem.data());
     // 加入新Item, 重置计时时间
-    m_laserItemTempList.push(m_eventTempItem);
+    m_laserItemTempList.push(laserItem);
 
-    m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+    m_curveObserver = new ControlCurveObserver(laserItem.data());
     m_curveObserver->addPointToCurve(startPos);
 
 }
@@ -195,11 +211,11 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, EraserTag)
     if (!m_eraser.eraseWholeItem)
     {
         m_eraseItemsCommand = new EraseItemsCommand;
-        m_eventTempItem = new BaseGraphicsItem(m_eraser.radius, QBrush(Qt::darkGray));
+        m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_eraser.radius, QBrush(Qt::darkGray)));
         m_eventTempItem->setZValue(m_backgroundItem->zValue() + 2);
         m_eventTempItem->setOpacity(0.6);
 
-        addItem(m_eventTempItem); // 临时Item不需要加入UndoStack
+        addItem(m_eventTempItem.data()); // 临时Item不需要加入UndoStack
         QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_eraser.radius);
         // 橡皮擦是临时用来显示的Item，不需要使用Command
         m_eventTempItem->setStrokePath(circle);
@@ -208,9 +224,9 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, EraserTag)
     }
     else
     {
-        m_eventTempItem = new BaseGraphicsItem(m_eraser.MIN_RADIUS, QBrush(Qt::black));
+        m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_eraser.MIN_RADIUS, QBrush(Qt::black)));
 
-        addItem(m_eventTempItem); // 临时Item不需要加入UndoStack
+        addItem(m_eventTempItem.data()); // 临时Item不需要加入UndoStack
         QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_eraser.MIN_RADIUS);
         m_eventTempItem->setStrokePath(circle);
 
@@ -299,16 +315,15 @@ void WhiteBoardScene::deviceRelease(LaserPenTag)
 template<typename T>
 void WhiteBoardScene::deviceRelease(EraserTag)
 {
-    if (m_eventTempItem) {
-        // QGraphicsItem的析构函数会考虑其父Item和Scene的关系断联操作
-        delete m_eventTempItem;
-        m_eventTempItem = nullptr;
-    }
+    m_eventTempItem.~QSharedPointer();
+    m_eventTempItem = nullptr;
     if (!m_eraser.eraseWholeItem)
     {
-        m_eraseItemsCommand->undo();
-        m_undoStack->push(m_eraseItemsCommand);
-        m_eraseItemsCommand = nullptr;
+        if (m_eraseItemsCommand->size() != 0) {
+            m_eraseItemsCommand->undo();
+            m_undoStack->push(m_eraseItemsCommand);
+            m_eraseItemsCommand = nullptr;
+        }
     }
     this->update();
 }

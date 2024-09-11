@@ -24,6 +24,7 @@ public slots:
     void changeToEraser();
     void undo();
     void redo();
+    void printIndex(int index);
 
 private:
     QGraphicsView* m_view;

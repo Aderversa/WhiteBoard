@@ -4,57 +4,54 @@
 #include <QUndoCommand>
 #include <QUndoStack>
 #include <QPainterPath>
+#include <QSharedPointer>
 
-class QGraphicsScene;
 
 namespace ADEV {
 
 class BaseGraphicsItem;
+class WhiteBoardScene;
+
 class AddItemCommand : public QUndoCommand
 {
 public:
-    explicit AddItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item);
-    explicit AddItemCommand(const AddItemCommand& command);
-    AddItemCommand& operator=(const AddItemCommand& command);
+    explicit AddItemCommand(WhiteBoardScene* scene, const QSharedPointer<BaseGraphicsItem>& item);
     ~AddItemCommand();
     void redo() override;
     void undo() override;
 
 private:
-    QGraphicsScene* m_scene;
-    BaseGraphicsItem* m_addedItem;
+    WhiteBoardScene* m_scene;
+    QSharedPointer<BaseGraphicsItem> m_addedItem;
 };
 
 class DeleteItemCommand : public QUndoCommand
 {
 public:
-    explicit DeleteItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item);
+    explicit DeleteItemCommand(WhiteBoardScene* scene, const QSharedPointer<BaseGraphicsItem>& item);
     ~DeleteItemCommand();
     void redo() override;
     void undo() override;
 
 private:
-    QGraphicsScene* m_scene;
-    BaseGraphicsItem* m_deletedItem;
+    WhiteBoardScene* m_scene;
+    QSharedPointer<BaseGraphicsItem> m_deletedItem;
 };
 
 class EraseItemCommand : public QUndoCommand
 {
 public:
-    explicit EraseItemCommand(QGraphicsScene* scene, BaseGraphicsItem* item, QPainterPath collidesPath);
-    explicit EraseItemCommand(const EraseItemCommand& command);
-    EraseItemCommand& operator=(const EraseItemCommand& command);
+    explicit EraseItemCommand(WhiteBoardScene* scene, const QSharedPointer<BaseGraphicsItem>& item, QPainterPath collidesPath);
     ~EraseItemCommand();
     void redo() override;
     void undo() override;
 
 private:
-    QGraphicsScene* m_scene;
-    BaseGraphicsItem* m_erasedItem;
+    WhiteBoardScene* m_scene;
 
-    DeleteItemCommand* m_deleteItemCommand;
+    QSharedPointer<DeleteItemCommand> m_deleteItemCommand;
     // AddItemCommand里面的Item由它自己的析构函数来确定是否释放
-    QList<AddItemCommand*> m_addItemCommands;
+    QList<QSharedPointer<AddItemCommand>> m_addItemCommands;
 };
 
 class EraseItemsCommand : public QUndoCommand
@@ -62,12 +59,13 @@ class EraseItemsCommand : public QUndoCommand
 public:
     EraseItemsCommand();
     ~EraseItemsCommand();
-    void push(EraseItemCommand* command);
+    void push(const QSharedPointer<EraseItemCommand>& command);
     void redo() override;
     void undo() override;
+    int size() const;
 
 private:
-    QList<EraseItemCommand*> m_eraseCommandList;
+    QList<QSharedPointer<EraseItemCommand>> m_eraseCommandList;
 };
 
 } // end of namespace ADEV

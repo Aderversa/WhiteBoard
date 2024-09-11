@@ -17,6 +17,9 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     initHighlightPen();
     initLaserPen();
     initEraser();
+
+    connect(this, &WhiteBoardScene::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
+
     if (m_backgroundItem == nullptr)
     {
         // 这里默认的大小应该由配置文件指定的，固定在配置文件上用户一般不可以更改
@@ -150,15 +153,18 @@ void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea)
     {
         return;
     }
-    QList<QGraphicsItem*> items = this->items(collidesArea);
+    QList<QGraphicsItem*> items = m_eventTempItem->collidingItems();
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem && pItem != m_eventTempItem)
+        if (pItem != m_backgroundItem)
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem != nullptr) {
-                EraseItemCommand* command = new EraseItemCommand(this, eraseItem, collidesArea);
-                m_eraseItemsCommand->push(command);
+                QSharedPointer<BaseGraphicsItem> pEraseItem = getItem(eraseItem);
+                if (!pEraseItem.isNull()) {
+                    QSharedPointer<EraseItemCommand> command(new EraseItemCommand(this, pEraseItem, collidesArea));
+                    m_eraseItemsCommand->push(command);
+                }
             }
         }
     }
@@ -176,10 +182,41 @@ void WhiteBoardScene::eraseCollidingWholeItems(const QPainterPath& collidesArea)
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem) {
-                DeleteItemCommand* command = new DeleteItemCommand(this, eraseItem);
+                QSharedPointer<BaseGraphicsItem> pEraseItem = getItem(eraseItem);
+                DeleteItemCommand* command = new DeleteItemCommand(this, pEraseItem);
                 m_undoStack->push(command);
             }
         }
+    }
+}
+
+void WhiteBoardScene::addItem(const QSharedPointer<BaseGraphicsItem>& pItem)
+{
+    m_existItemMap[pItem.data()] = pItem.toWeakRef();
+    QGraphicsScene::addItem(pItem.data());
+}
+
+void WhiteBoardScene::addItem(QGraphicsItem *item)
+{
+    QGraphicsScene::addItem(item);
+}
+
+QSharedPointer<BaseGraphicsItem> WhiteBoardScene::getItem(BaseGraphicsItem* pItem)
+{
+    auto it = m_existItemMap.find(pItem);
+    if (it == m_existItemMap.end())
+    {
+        return QSharedPointer<BaseGraphicsItem>(nullptr);
+    }
+    else
+    {
+        // 升格失败则返回空指针
+        QSharedPointer<BaseGraphicsItem> pointer = m_existItemMap[pItem].toStrongRef();
+        if (pointer.isNull()) // 删除无效指针
+        {
+            m_existItemMap.remove(pItem);
+        }
+        return pointer;
     }
 }
 
@@ -226,6 +263,7 @@ WhiteBoardEraser WhiteBoardScene::eraser() const
 void WhiteBoardScene::selectTool(WhiteBoardTool toolType)
 {
     m_nowUseTool = toolType;
+    emit toolChanged(m_nowUseTool);
 }
 
 
@@ -273,7 +311,11 @@ LaserStrokeTempList::LaserStrokeTempList(int countdownSecond)
 {
 }
 
-void LaserStrokeTempList::push(BaseGraphicsItem* laserStroke)
+LaserStrokeTempList::~LaserStrokeTempList()
+{
+}
+
+void LaserStrokeTempList::push(const QSharedPointer<BaseGraphicsItem>& laserStroke)
 {
     m_laserList.push_back(laserStroke);
     m_countTimes = 0;
@@ -281,44 +323,41 @@ void LaserStrokeTempList::push(BaseGraphicsItem* laserStroke)
     for (auto& item : m_laserList) {
         item->setOpacity(1);
     }
-    if (m_timer) {
-        delete m_timer;
-    }
+    m_timer.reset();
 }
 
 void LaserStrokeTempList::startTimer()
 {
-    m_timer = new QTimer(this);
-    connect(m_timer, &QTimer::timeout, this, &LaserStrokeTempList::handleTimeout);
+    m_timer.reset(new QTimer(this));
+    connect(m_timer.get(), &QTimer::timeout, this, &LaserStrokeTempList::handleTimeout);
     m_timer->start(200);
 }
 
 void LaserStrokeTempList::handleTimeout()
 {
     int remainCount = m_countdown - m_countTimes;
-    auto adjustOpacity = [this](qreal opacity) {
-        for (auto& item : m_laserList)  {
-            item->setOpacity(opacity);
-        }
-    };
     switch(remainCount)
     {
     case 0:
         // 释放所有激光笔Item
-        while (!m_laserList.empty())
-        {
-            BaseGraphicsItem* item = m_laserList.front();
-            m_laserList.pop_front();
-            if (item) {
-                delete item;
-            }
-        }
-        delete m_timer;
+        m_laserList.clear();
+        m_countTimes = 0;
+        m_timer.reset();
         break;
     default:
         break;
     }
-    m_countTimes+=200;
+    m_countTimes += 200;
+}
+
+void LaserStrokeTempList::toolChanged(WhiteBoardTool tool)
+{
+    if (tool != WhiteBoardTool::LaserPen)
+    {
+        m_laserList.clear();
+        m_countTimes = 0;
+        m_timer.reset();
+    }
 }
 
 
