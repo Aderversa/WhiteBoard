@@ -120,7 +120,7 @@ public: // getter & setter
     WhiteBoardLaserPen laserPen() const;
     WhiteBoardEraser eraser() const;
     void selectTool(WhiteBoardTool toolType);
-    QUndoStack* undoStack();
+    QSharedPointer<QUndoStack> undoStack() {return m_undoStack;}
 
 private:  // 利用配置对象初始化工具的方法
     void initNormalPen();
@@ -132,8 +132,8 @@ signals:
     void toolChanged(WhiteBoardTool tool);
 
 private:
-    BackgroundItem* m_backgroundItem;
-    QUndoStack* m_undoStack;
+    QScopedPointer<BackgroundItem> m_backgroundItem;
+    QSharedPointer<QUndoStack> m_undoStack;
     QMap<BaseGraphicsItem*, QWeakPointer<BaseGraphicsItem>> m_existItemMap;
 
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;

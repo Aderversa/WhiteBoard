@@ -23,22 +23,15 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     if (m_backgroundItem == nullptr)
     {
         // 这里默认的大小应该由配置文件指定的，固定在配置文件上用户一般不可以更改
-        m_backgroundItem = new BackgroundItem(Qt::black, QSizeF(1024, 512));
+        m_backgroundItem.reset(new BackgroundItem(Qt::black, QSizeF(1024, 512)));
     }
     // backgroundItem属于Scene的属性，不能够将其归类管理
-    this->addItem(m_backgroundItem);
+    this->addItem(m_backgroundItem.data());
     m_nowUseTool = WhiteBoardTool::NormalPen;
 }
 
 WhiteBoardScene::~WhiteBoardScene()
-{
-    if (m_backgroundItem) {
-        delete m_backgroundItem; // 外界必须保证Item是new来的
-    }
-    if (m_undoStack) {
-        delete m_undoStack;  // 其中的undoCommand会被自动地delete
-    }
-}
+{}
 
 void WhiteBoardScene::inputDevicePress(const QPointF& startPos)
 {
@@ -108,41 +101,54 @@ void WhiteBoardScene::inputDeviceRelease()
 
 void WhiteBoardScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    QGraphicsScene::mousePressEvent(event);
+    // QGraphicsScene::mousePressEvent(event);
     if (event->button() == Qt::LeftButton)
     {
         inputDevicePress(event->scenePos());
+    }
+    else
+    {
+        event->ignore();
     }
 }
 
 void WhiteBoardScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
+    // QGraphicsScene::mouseMoveEvent(event);
     if (event->buttons() == Qt::LeftButton)
     {
         inputDeviceMove(event->scenePos(), event->lastScenePos());
+    }
+    else
+    {
+        event->ignore();
     }
 }
 
 void WhiteBoardScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
-    QGraphicsScene::mouseReleaseEvent(event);
+    // QGraphicsScene::mouseReleaseEvent(event);
     if (event->button() == Qt::LeftButton)
     {
         inputDeviceRelease();
+    }
+    else
+    {
+        event->ignore();
     }
 }
 
 bool WhiteBoardScene::changeBackground(BackgroundItem* background)
 {
-    if (dynamic_cast<BackgroundImageItem*>(m_backgroundItem) != nullptr){
+    if (dynamic_cast<BackgroundImageItem*>(m_backgroundItem.get()) != nullptr){
         return false;
     }
-    delete m_backgroundItem;
+    m_backgroundItem.reset();
     if (background == nullptr) {
-        m_backgroundItem = new BackgroundItem(Qt::white, QSizeF(1024, 512));
+        m_backgroundItem.reset(new BackgroundItem(Qt::white, QSizeF(1024, 512)));
     }
     else {
-        m_backgroundItem = background;
+        m_backgroundItem.reset(background);
     }
     return true;
 }
@@ -156,7 +162,7 @@ void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea)
     QList<QGraphicsItem*> items = m_eventTempItem->collidingItems();
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem)
+        if (pItem != m_backgroundItem.get())
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem != nullptr) {
@@ -178,7 +184,7 @@ void WhiteBoardScene::eraseCollidingWholeItems(const QPainterPath& collidesArea)
     QList<QGraphicsItem*> items = this->items(collidesArea);
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem && pItem != m_eventTempItem)
+        if (pItem != m_backgroundItem.get() && pItem != m_eventTempItem)
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem) {
@@ -266,12 +272,6 @@ void WhiteBoardScene::selectTool(WhiteBoardTool toolType)
     emit toolChanged(m_nowUseTool);
 }
 
-
-QUndoStack* WhiteBoardScene::undoStack()
-{
-    return m_undoStack;
-}
-
 void WhiteBoardScene::initNormalPen()
 {
     // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
@@ -301,7 +301,7 @@ void WhiteBoardScene::initEraser()
 {
     // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
     // 后续扩展了配置类的时候再回来对此处进行优化
-    m_eraser.radius = 40;
+    m_eraser.radius = 70;
     m_eraser.eraseWholeItem = false;
 }
 // WhiteBoardScene::LaserStrokeTepmList

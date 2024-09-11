@@ -18,7 +18,6 @@ AddItemCommand::AddItemCommand(WhiteBoardScene* scene, const QSharedPointer<Base
 
 AddItemCommand::~AddItemCommand()
 {
-    qDebug() << "~AddItemCommand()";
 }
 
 void AddItemCommand::redo()  // 执行完后Item在Scene
@@ -43,7 +42,6 @@ DeleteItemCommand::DeleteItemCommand(WhiteBoardScene* scene, const QSharedPointe
 
 DeleteItemCommand::~DeleteItemCommand()
 {
-    qDebug() << "~DeleteItemCommand()";
 }
 
 void DeleteItemCommand::redo()
@@ -95,7 +93,6 @@ EraseItemCommand::EraseItemCommand(WhiteBoardScene* scene, const QSharedPointer<
 
 EraseItemCommand::~EraseItemCommand()
 {
-    qDebug() << "~EraseItemCommand()";
 }
 
 void EraseItemCommand::redo()
@@ -129,7 +126,6 @@ EraseItemsCommand::EraseItemsCommand()
 
 EraseItemsCommand::~EraseItemsCommand()
 {
-    qDebug() << "~EraseItemsCommand()";
 }
 
 void EraseItemsCommand::push(const QSharedPointer<EraseItemCommand>& command)
