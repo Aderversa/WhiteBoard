@@ -10,8 +10,10 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     , m_view(new QGraphicsView(scene))
     , m_normalPenBtn(new QPushButton(tr("普通笔")))
     , m_hightlightPenBtn(new QPushButton(tr("荧光笔")))
-    , m_laserPenBtn(new QPushButton(tr("激光笔(待完成)")))
-    , m_eraserBtn(new QPushButton(tr("橡皮擦(待完成)")))
+    , m_laserPenBtn(new QPushButton(tr("激光笔")))
+    , m_eraserBtn(new QPushButton(tr("橡皮擦")))
+    , m_undoBtn(new QPushButton(tr("撤销")))
+    , m_redoBtn(new QPushButton(tr("重做")))
     , m_btnLayout(new QHBoxLayout)
     , m_primeLayout(new QVBoxLayout(this))
 {
@@ -19,6 +21,8 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     m_btnLayout->addWidget(m_hightlightPenBtn);
     m_btnLayout->addWidget(m_laserPenBtn);
     m_btnLayout->addWidget(m_eraserBtn);
+    m_btnLayout->addWidget(m_undoBtn);
+    m_btnLayout->addWidget(m_redoBtn);
     m_primeLayout->addLayout(m_btnLayout);
     m_primeLayout->addWidget(m_view);
 
@@ -26,6 +30,8 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     connect(m_hightlightPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToHighlightPen);
     connect(m_laserPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToLaserPen);
     connect(m_eraserBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToEraser);
+    connect(m_undoBtn, &QPushButton::clicked, this, &WhiteBoardView::undo);
+    connect(m_redoBtn, &QPushButton::clicked, this, &WhiteBoardView::redo);
 }
 
 void WhiteBoardView::changeToNormalPen()
@@ -40,7 +46,7 @@ void WhiteBoardView::changeToHighlightPen()
 
 void WhiteBoardView::changeToLaserPen()
 {
-
+    m_scene->selectTool(WhiteBoardTool::LaserPen);
 }
 
 void WhiteBoardView::changeToEraser()
@@ -48,5 +54,14 @@ void WhiteBoardView::changeToEraser()
     m_scene->selectTool(WhiteBoardTool::Eraser);
 }
 
+void WhiteBoardView::undo()
+{
+    m_scene->undoStack()->undo();
+}
+
+void WhiteBoardView::redo()
+{
+    m_scene->undoStack()->redo();
+}
 
 } // ADEV

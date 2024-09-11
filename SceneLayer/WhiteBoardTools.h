@@ -28,6 +28,7 @@ struct WhiteBoardHighlightPen {
 
 struct WhiteBoardLaserPen {
     QColor color;
+    constexpr static qreal FIXED_WIDTH = 6;
 };
 
 struct WhiteBoardEraser {

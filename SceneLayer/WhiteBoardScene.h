@@ -2,17 +2,37 @@
 #define WHITEBOARDSCENE_H
 
 #include <QGraphicsScene>
+#include <QGraphicsBlurEffect>
 #include "SceneLayer/BasicCommand.h"
 #include "SceneLayer/WhiteBoardTools.h"
 #include "ItemLayer/BaseGraphicsItem.h"
 #include "ItemLayer/ControlGroupObserver.h"
 #include "SceneLayer/BackgroundItem.h"
 
+class QTimer;
 class QUndoStack;
 
 namespace ADEV {
 
 class BackgroundItem;
+
+class LaserStrokeTempList : public QObject
+{
+    Q_OBJECT
+public:
+    LaserStrokeTempList(int countdownSecond);
+    void push(BaseGraphicsItem* laserStroke);
+    void startTimer();
+
+private slots:
+    void handleTimeout();
+
+private:
+    QList<BaseGraphicsItem*> m_laserList;
+    QTimer* m_timer = nullptr;
+    int m_countdown;
+    int m_countTimes = 0;
+};
 
 class WhiteBoardScene : public QGraphicsScene
 {
@@ -88,13 +108,13 @@ public: // getter & setter
     WhiteBoardLaserPen laserPen() const;
     WhiteBoardEraser eraser() const;
     void selectTool(WhiteBoardTool toolType);
+    QUndoStack* undoStack();
 
 private:  // 利用配置对象初始化工具的方法
     void initNormalPen();
     void initHighlightPen();
     void initLaserPen();
     void initEraser();
-
 
 private:
     BackgroundItem* m_backgroundItem;
@@ -103,6 +123,7 @@ private:
     BaseGraphicsItem* m_eventTempItem = nullptr;
     ControlCurveObserver* m_curveObserver = nullptr;
     EraseItemsCommand* m_eraseItemsCommand = nullptr;
+    LaserStrokeTempList m_laserItemTempList;
 
     WhiteBoardTool m_nowUseTool; // 标志现在使用的工具
     WhiteBoardNormalPen  m_normalPen;
@@ -112,6 +133,7 @@ private:
 
     // 配置类用来读取配置信息
 };
+
 
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, NormalPenTag)
@@ -149,6 +171,21 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
 template<typename T>
 void WhiteBoardScene::devicePress(const QPointF& startPos, LaserPenTag)
 {
+
+    m_eventTempItem = new BaseGraphicsItem(m_laserPen.FIXED_WIDTH, QBrush(Qt::white));
+    m_eventTempItem->setZValue(m_backgroundItem->zValue() + 2);
+    // 添加阴影效果
+    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect;
+    effect->setOffset(0, 0);
+    effect->setBlurRadius(15);
+    effect->setColor(m_laserPen.color);
+    m_eventTempItem->setGraphicsEffect(effect);
+    addItem(m_eventTempItem);
+    // 加入新Item, 重置计时时间
+    m_laserItemTempList.push(m_eventTempItem);
+
+    m_curveObserver = new ControlCurveObserver(m_eventTempItem);
+    m_curveObserver->addPointToCurve(startPos);
 
 }
 
@@ -198,7 +235,8 @@ void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastSce
 template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, LaserPenTag)
 {
-
+    Q_UNUSED(lastScenePos)
+    m_curveObserver->addPointToCurve(scenePos);
 }
 
 template<typename T>
@@ -213,7 +251,10 @@ void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastSce
     else
         radius = m_eraser.MIN_RADIUS;
     QPainterPath track = m_eventTempItem->lineToStroke(QLineF(lastScenePos, scenePos), radius);
-    eraseCollidingWholeItems(track);
+    if (!m_eraser.eraseWholeItem)
+        handleCollidingItems(track);
+    else
+        eraseCollidingWholeItems(track);
     QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(scenePos, scenePos), radius);
     m_eventTempItem->setStrokePath(circle);
     this->update();
@@ -247,7 +288,12 @@ void WhiteBoardScene::deviceRelease(HightlightPenTag)
 template<typename T>
 void WhiteBoardScene::deviceRelease(LaserPenTag)
 {
-
+    if (m_curveObserver) {
+        delete m_curveObserver;
+        m_curveObserver = nullptr;
+    }
+    // 操作结束，开始计时
+    m_laserItemTempList.startTimer();
 }
 
 template<typename T>

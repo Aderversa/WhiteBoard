@@ -3,6 +3,7 @@
 
 #include <QUndoStack>
 #include <QGraphicsSceneMouseEvent>
+#include <QTimer>
 
 namespace ADEV {
 
@@ -10,6 +11,7 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     : QGraphicsScene()
     , m_backgroundItem(background)
     , m_undoStack(new QUndoStack)
+    , m_laserItemTempList(3)
 {
     initNormalPen();
     initHighlightPen();
@@ -226,6 +228,12 @@ void WhiteBoardScene::selectTool(WhiteBoardTool toolType)
     m_nowUseTool = toolType;
 }
 
+
+QUndoStack* WhiteBoardScene::undoStack()
+{
+    return m_undoStack;
+}
+
 void WhiteBoardScene::initNormalPen()
 {
     // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
@@ -256,7 +264,61 @@ void WhiteBoardScene::initEraser()
     // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
     // 后续扩展了配置类的时候再回来对此处进行优化
     m_eraser.radius = 40;
-    m_eraser.eraseWholeItem = true;
+    m_eraser.eraseWholeItem = false;
+}
+// WhiteBoardScene::LaserStrokeTepmList
+LaserStrokeTempList::LaserStrokeTempList(int countdownSecond)
+    : QObject()
+    , m_countdown(countdownSecond * 1000) // 用户指定秒，实际记录成毫秒
+{
+}
+
+void LaserStrokeTempList::push(BaseGraphicsItem* laserStroke)
+{
+    m_laserList.push_back(laserStroke);
+    m_countTimes = 0;
+    // 重置透明度
+    for (auto& item : m_laserList) {
+        item->setOpacity(1);
+    }
+    if (m_timer) {
+        delete m_timer;
+    }
+}
+
+void LaserStrokeTempList::startTimer()
+{
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &LaserStrokeTempList::handleTimeout);
+    m_timer->start(200);
+}
+
+void LaserStrokeTempList::handleTimeout()
+{
+    int remainCount = m_countdown - m_countTimes;
+    auto adjustOpacity = [this](qreal opacity) {
+        for (auto& item : m_laserList)  {
+            item->setOpacity(opacity);
+        }
+    };
+    switch(remainCount)
+    {
+    case 0:
+        // 释放所有激光笔Item
+        while (!m_laserList.empty())
+        {
+            BaseGraphicsItem* item = m_laserList.front();
+            m_laserList.pop_front();
+            if (item) {
+                delete item;
+            }
+        }
+        delete m_timer;
+        break;
+    default:
+        break;
+    }
+    m_countTimes+=200;
 }
 
 

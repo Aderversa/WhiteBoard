@@ -22,6 +22,8 @@ public slots:
     void changeToHighlightPen();
     void changeToLaserPen();
     void changeToEraser();
+    void undo();
+    void redo();
 
 private:
     QGraphicsView* m_view;
@@ -31,6 +33,8 @@ private:
     QPushButton* m_hightlightPenBtn;
     QPushButton* m_laserPenBtn;
     QPushButton* m_eraserBtn;
+    QPushButton* m_undoBtn;
+    QPushButton* m_redoBtn;
     QHBoxLayout* m_btnLayout;
     QVBoxLayout* m_primeLayout;
 };
