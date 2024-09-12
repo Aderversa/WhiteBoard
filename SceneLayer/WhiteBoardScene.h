@@ -137,8 +137,8 @@ private:
     QMap<BaseGraphicsItem*, QWeakPointer<BaseGraphicsItem>> m_existItemMap;
 
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
-    ControlCurveObserver* m_curveObserver = nullptr;
-    EraseItemsCommand* m_eraseItemsCommand = nullptr;
+    QSharedPointer<ControlCurveObserver> m_curveObserver = nullptr;
+    QSharedPointer<EraseItemsCommand> m_eraseItemsCommand = nullptr;
     LaserStrokeTempList m_laserItemTempList;
 
     WhiteBoardTool m_nowUseTool; // 标志现在使用的工具
@@ -159,7 +159,7 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, NormalPenTag)
     // 添加操作使用Command进行
     AddItemCommand* command = new AddItemCommand(this, m_eventTempItem);
     m_undoStack->push(command); // add操作真正执行是在push方法内
-    m_curveObserver = new ControlCurveObserver(m_eventTempItem.data());
+    m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(m_eventTempItem.data()));
     // 后面的QSizeF是随便给的，因为我知道ControlCurveObserver在其formItem只处理leftTop点
     m_curveObserver->addPointToCurve(startPos);
 }
@@ -176,11 +176,11 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, HightlightPenTag)
     m_undoStack->push(command); // add操作真正执行是在push方法内
     if (!m_highlightPen.openStraightLineMode)
     {
-        m_curveObserver = new ControlCurveObserver(m_eventTempItem.data());
+        m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(m_eventTempItem.data()));
     }
     else
     {
-        m_curveObserver = new ControlLineObserver(m_eventTempItem.data());
+        m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlLineObserver(m_eventTempItem.data()));
     }
     m_curveObserver->addPointToCurve(startPos);
 }
@@ -200,7 +200,7 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, LaserPenTag)
     // 加入新Item, 重置计时时间
     m_laserItemTempList.push(laserItem);
 
-    m_curveObserver = new ControlCurveObserver(laserItem.data());
+    m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(laserItem.data()));
     m_curveObserver->addPointToCurve(startPos);
 
 }
@@ -210,7 +210,7 @@ void WhiteBoardScene::devicePress(const QPointF& startPos, EraserTag)
 {
     if (!m_eraser.eraseWholeItem)
     {
-        m_eraseItemsCommand = new EraseItemsCommand;
+        m_eraseItemsCommand = QSharedPointer<EraseItemsCommand>(new EraseItemsCommand);
         m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_eraser.radius, QBrush(Qt::darkGray)));
         m_eventTempItem->setZValue(m_backgroundItem->zValue() + 2);
         m_eventTempItem->setOpacity(0.6);
@@ -238,6 +238,8 @@ template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, NormalPenTag)
 {
     Q_UNUSED(lastScenePos);
+    if (m_curveObserver.isNull())
+        return;
     m_curveObserver->addPointToCurve(scenePos);
 }
 
@@ -245,6 +247,8 @@ template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, HightlightPenTag)
 {
     Q_UNUSED(lastScenePos);
+    if (m_curveObserver.isNull())
+        return;
     m_curveObserver->addPointToCurve(scenePos);
 }
 
@@ -252,12 +256,17 @@ template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, LaserPenTag)
 {
     Q_UNUSED(lastScenePos)
+    if (m_curveObserver.isNull())
+        return;
     m_curveObserver->addPointToCurve(scenePos);
 }
 
 template<typename T>
 void WhiteBoardScene::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos, EraserTag)
 {
+    if (m_eventTempItem.isNull()){
+        return;
+    }
     // 定义空指针异常，防止意外的事件进行错误的处理
     if (!m_eventTempItem) // 不知道什么原因，明明没有定义鼠标滚轮事件，滚动滚轮却会触发这个事件
         return;
@@ -280,34 +289,25 @@ template<typename T>
 void WhiteBoardScene::deviceRelease(NormalPenTag)
 {
     // 同一时间只处理同一个工具的一套(press-move-release)流程，所以不用担心同步问题
-    if (m_curveObserver) {// 已经没有用了，需要释放
-        delete m_curveObserver;
-        m_curveObserver = nullptr;
-    }
+    m_curveObserver.reset(nullptr);
     // item已经在本次事件中塑造完成，后续交给Scene管理
     // m_eventTempItem不再能操作已经塑造完成的Item
-    m_eventTempItem = nullptr;
+    m_eventTempItem.reset(nullptr);
 }
 
 template<typename T>
 void WhiteBoardScene::deviceRelease(HightlightPenTag)
 {
-    if (m_curveObserver) {
-        delete m_curveObserver;
-        m_curveObserver = nullptr;
-    }
+    m_curveObserver.reset(nullptr);
     // item已经在本次事件中塑造完成，后续交给Scene管理
     // m_eventTempItem不再能操作已经塑造完成的Item
-    m_eventTempItem = nullptr;
+    m_eventTempItem.reset(nullptr);
 }
 
 template<typename T>
 void WhiteBoardScene::deviceRelease(LaserPenTag)
 {
-    if (m_curveObserver) {
-        delete m_curveObserver;
-        m_curveObserver = nullptr;
-    }
+    m_curveObserver.reset(nullptr);
     // 操作结束，开始计时
     m_laserItemTempList.startTimer();
 }
@@ -315,17 +315,15 @@ void WhiteBoardScene::deviceRelease(LaserPenTag)
 template<typename T>
 void WhiteBoardScene::deviceRelease(EraserTag)
 {
-    m_eventTempItem.~QSharedPointer();
-    m_eventTempItem = nullptr;
+    m_eventTempItem.reset(nullptr);
     if (!m_eraser.eraseWholeItem)
     {
         if (m_eraseItemsCommand->size() != 0) {
             m_eraseItemsCommand->undo();
-            m_undoStack->push(m_eraseItemsCommand);
-            m_eraseItemsCommand = nullptr;
+            m_undoStack->push(m_eraseItemsCommand.get());
+            m_eraseItemsCommand.reset(nullptr);
         }
     }
-    this->update();
 }
 
 } // end of namespace ADEV

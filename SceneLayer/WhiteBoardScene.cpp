@@ -23,7 +23,7 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     if (m_backgroundItem == nullptr)
     {
         // 这里默认的大小应该由配置文件指定的，固定在配置文件上用户一般不可以更改
-        m_backgroundItem.reset(new BackgroundItem(Qt::black, QSizeF(1024, 512)));
+        m_backgroundItem.reset(new BackgroundItem(Qt::white, QSizeF(1024, 512)));
     }
     // backgroundItem属于Scene的属性，不能够将其归类管理
     this->addItem(m_backgroundItem.data());
@@ -31,7 +31,9 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
 }
 
 WhiteBoardScene::~WhiteBoardScene()
-{}
+{
+    qDebug() << "~WhiteBoardScene()";
+}
 
 void WhiteBoardScene::inputDevicePress(const QPointF& startPos)
 {

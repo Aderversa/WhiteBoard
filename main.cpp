@@ -62,9 +62,9 @@ int main(int argc, char** argv)
 {
     using namespace ADEV;
     QApplication a(argc, argv);
-    QImage image(QString(":/BackgroundImages/3.png"));
-    BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());
-    WhiteBoardScene scene(backgroundItem);
+    // QImage image(QString(":/BackgroundImages/3.png"));
+    // BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());
+    WhiteBoardScene scene(nullptr);
     WhiteBoardView view(&scene);
     view.show();
     return a.exec();
