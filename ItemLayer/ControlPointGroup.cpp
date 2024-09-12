@@ -244,7 +244,7 @@ void EightWayMovementGroup::paint(QPainter *painter, const QStyleOptionGraphicsI
     Q_UNUSED(option);
     Q_UNUSED(widget);
     QPen pen(Qt::DashLine);
-    pen.setColor(Qt::white);
+    pen.setColor(Qt::gray);
     pen.setWidth(2);
     painter->setPen(pen);
     painter->setBrush(QBrush(Qt::NoBrush));

@@ -57,6 +57,26 @@ void ControlRectangleObserver::formItem(QRectF rect, qreal angle)
 }
 // end of ControlRectangleObserver
 // ----------------------------------------------------------------------
+// ControlEllipseObserver
+ControlEllipseObserver::ControlEllipseObserver(ItemShaper* itemShaper)
+    : ControlGroupObserver(itemShaper)
+{
+}
+
+void ControlEllipseObserver::formItem(QRectF rect, qreal angle)
+{
+    qreal left = rect.left() + itemShaper()->strokeWidth();
+    qreal right = rect.right() - itemShaper()->strokeWidth();
+    qreal top = rect.top() + itemShaper()->strokeWidth();
+    qreal bottom = rect.bottom() - itemShaper()->strokeWidth();
+    QPainterPath outerEllipse;
+    outerEllipse.addEllipse(rect);
+    QPainterPath innerEllipse;
+    innerEllipse.addEllipse(QRectF(QPointF(left, top), QPointF(right, bottom)));
+    itemShaper()->setStrokePath(outerEllipse.subtracted(innerEllipse));
+}
+// end of ControlEllipseObserver
+// ----------------------------------------------------------------------
 // ControlCurveObserver
 ControlCurveObserver::ControlCurveObserver(ItemShaper* itemShaper)
     : ControlGroupObserver(itemShaper)

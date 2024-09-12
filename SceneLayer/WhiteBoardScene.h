@@ -185,6 +185,7 @@ class WhiteBoardShapePen : public QObject, public WhiteBoardAbstractTool {
 public:
     enum ItemShape {
         Rectangle = 0,
+        Ellipse,
     };
 
 public:

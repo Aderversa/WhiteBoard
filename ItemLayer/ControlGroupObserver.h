@@ -43,6 +43,16 @@ public slots:
     void formItem(QRectF rect, qreal angle) override final;
 };
 
+class ControlEllipseObserver : public ControlGroupObserver
+{
+    Q_OBJECT
+public:
+    ControlEllipseObserver(ItemShaper* itemShaper);
+
+public slots:
+    void formItem(QRectF rect, qreal angle) override final;
+};
+
 class ControlCurveObserver : public ControlGroupObserver
 {
     Q_OBJECT

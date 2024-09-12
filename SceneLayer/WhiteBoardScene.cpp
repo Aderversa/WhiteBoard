@@ -487,6 +487,7 @@ WhiteBoardShapePen::WhiteBoardShapePen(WhiteBoardScene* scene)
     , m_width(6)
     , m_opacity(1)
     , m_color(Qt::red)
+    , m_shape(Ellipse)
 {
 }
 
@@ -498,7 +499,17 @@ void WhiteBoardShapePen::devicePress(const QPointF& startPos)
     m_scene->undoStack()->push(command);
 
     m_startPoint.reset(new QPointF(startPos));
-    m_observer = new ControlRectangleObserver(m_eventTempItem.get());
+    switch (m_shape) {
+    case Rectangle:
+        m_observer = new ControlRectangleObserver(m_eventTempItem.get());
+        break;
+    case Ellipse:
+        m_observer = new ControlEllipseObserver(m_eventTempItem.get());
+        break;
+    default:
+        m_observer = nullptr;
+        break;
+    }
     m_observer->formItem(QRectF(startPos, startPos), 0.0);
 }
 
