@@ -2,40 +2,12 @@
 #define WHITEBOARDTOOLS_H
 
 #include <QColor>
+#include <QPointer>
+#include <QSharedPointer>
+#include "SceneLayer/WhiteBoardScene.h"
+#include "ItemLayer/ControlGroupObserver.h"
 
 namespace ADEV {
-
-enum class WhiteBoardTool
-{
-    NormalPen = 0,  // 普通的钢笔
-    HighlightPen,   // 荧光笔
-    LaserPen,       // 激光笔
-    Eraser,         // 橡皮擦
-    GraphcsiItemPen //用来绘制标准图元，如矩形、椭圆的笔
-};
-
-struct WhiteBoardNormalPen {
-    qreal width;
-    QColor color;
-};
-
-struct WhiteBoardHighlightPen {
-    qreal width;
-    QColor color;
-    qreal opacity;
-    bool openStraightLineMode;
-};
-
-struct WhiteBoardLaserPen {
-    QColor color;
-    constexpr static qreal FIXED_WIDTH = 6;
-};
-
-struct WhiteBoardEraser {
-    qreal radius;
-    bool eraseWholeItem;
-    constexpr static qreal MIN_RADIUS = 10;
-};
 
 
 } // end of namespace ADEV

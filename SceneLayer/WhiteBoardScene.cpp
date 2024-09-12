@@ -11,15 +11,7 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     : QGraphicsScene()
     , m_backgroundItem(background)
     , m_undoStack(new QUndoStack)
-    , m_laserItemTempList(3)
 {
-    initNormalPen();
-    initHighlightPen();
-    initLaserPen();
-    initEraser();
-
-    connect(this, &WhiteBoardScene::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
-
     if (m_backgroundItem == nullptr)
     {
         // 这里默认的大小应该由配置文件指定的，固定在配置文件上用户一般不可以更改
@@ -27,78 +19,26 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     }
     // backgroundItem属于Scene的属性，不能够将其归类管理
     this->addItem(m_backgroundItem.data());
-    m_nowUseTool = WhiteBoardTool::NormalPen;
 }
 
 WhiteBoardScene::~WhiteBoardScene()
 {
-    qDebug() << "~WhiteBoardScene()";
 }
 
 void WhiteBoardScene::inputDevicePress(const QPointF& startPos)
 {
     // 需要将不同的工具的处理逻辑进行分离
-    switch(m_nowUseTool)
-    {
-    case WhiteBoardTool::NormalPen:
-        devicePress(startPos, NormalPenTag{});
-        break;
-    case WhiteBoardTool::HighlightPen:
-        devicePress(startPos, HightlightPenTag{});
-        break;
-    case WhiteBoardTool::LaserPen:
-        devicePress(startPos, LaserPenTag{});
-        break;
-    case WhiteBoardTool::Eraser:
-        devicePress(startPos, EraserTag{});
-        break;
-    default:
-        break;
-    }
+    m_tool->devicePress(startPos);
 }
 
 void WhiteBoardScene::inputDeviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
 {
-    // 需要将不同的工具的处理逻辑进行分离
-    switch(m_nowUseTool)
-    {
-    case WhiteBoardTool::NormalPen:
-        deviceMove(scenePos, lastScenePos, NormalPenTag{});
-        break;
-    case WhiteBoardTool::HighlightPen:
-        deviceMove(scenePos, lastScenePos, HightlightPenTag{});
-        break;
-    case WhiteBoardTool::LaserPen:
-        deviceMove(scenePos, lastScenePos, LaserPenTag{});
-        break;
-    case WhiteBoardTool::Eraser:
-        deviceMove(scenePos, lastScenePos, EraserTag{});
-        break;
-    default:
-        break;
-    }
+    m_tool->deviceMove(scenePos, lastScenePos);
 }
 
 void WhiteBoardScene::inputDeviceRelease()
 {
-    // 需要将不同的工具的处理逻辑进行分离
-    switch(m_nowUseTool)
-    {
-    case WhiteBoardTool::NormalPen:
-        deviceRelease(NormalPenTag{});
-        break;
-    case WhiteBoardTool::HighlightPen:
-        deviceRelease(HightlightPenTag{});
-        break;
-    case WhiteBoardTool::LaserPen:
-        deviceRelease(LaserPenTag{});
-        break;
-    case WhiteBoardTool::Eraser:
-        deviceRelease(EraserTag{});
-        break;
-    default:
-        break;
-    }
+    m_tool->deviceRelease();
 }
 
 void WhiteBoardScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -155,38 +95,40 @@ bool WhiteBoardScene::changeBackground(BackgroundItem* background)
     return true;
 }
 
-void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea)
+void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea,
+                                           const QSharedPointer<BaseGraphicsItem>& pointer,
+                                           EraseItemsCommand* commands)
 {
-    if (m_nowUseTool != WhiteBoardTool::Eraser)
-    {
+    if (dynamic_cast<WhiteBoardEraser*>(m_tool.data()) == nullptr) {
         return;
     }
-    QList<QGraphicsItem*> items = m_eventTempItem->collidingItems();
+    QList<QGraphicsItem*> items = this->items(collidesArea);
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem.get())
+        if (pItem != m_backgroundItem.get() && pItem != pointer.get())
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem != nullptr) {
                 QSharedPointer<BaseGraphicsItem> pEraseItem = getItem(eraseItem);
                 if (!pEraseItem.isNull()) {
-                    QSharedPointer<EraseItemCommand> command(new EraseItemCommand(this, pEraseItem, collidesArea));
-                    m_eraseItemsCommand->push(command);
+                    QSharedPointer<EraseItemCommand> command(new EraseItemCommand(this, pEraseItem, pointer->shape()));
+                    commands->push(command);
                 }
             }
         }
     }
 }
 
-void WhiteBoardScene::eraseCollidingWholeItems(const QPainterPath& collidesArea)
+void WhiteBoardScene::eraseCollidingWholeItems(const QPainterPath& collidesArea,
+                                               const QSharedPointer<BaseGraphicsItem>& pointer)
 {
-    if (m_nowUseTool != WhiteBoardTool::Eraser) {
+    if (dynamic_cast<WhiteBoardEraser*>(m_tool.get()) == nullptr) {
         return;
     }
     QList<QGraphicsItem*> items = this->items(collidesArea);
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem.get() && pItem != m_eventTempItem)
+        if (pItem != m_backgroundItem.get() && pItem != pointer.get())
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem) {
@@ -228,84 +170,236 @@ QSharedPointer<BaseGraphicsItem> WhiteBoardScene::getItem(BaseGraphicsItem* pIte
     }
 }
 
-void WhiteBoardScene:: setNormalPen(const WhiteBoardNormalPen& normalPen)
+void WhiteBoardScene::useNormalPen()
 {
-    m_normalPen = normalPen;
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardNormalPen*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardNormalPen(this));
+        emit toolChanged();
+    }
 }
 
-void WhiteBoardScene::setHighlightPen(const WhiteBoardHighlightPen& hightlightPen)
+void WhiteBoardScene::useHighlightPen()
 {
-    m_highlightPen = hightlightPen;
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardHighlightPen*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardHighlightPen(this));
+        emit toolChanged();
+    }
 }
 
-void WhiteBoardScene::setLaserPen(const WhiteBoardLaserPen& laserPen)
+void WhiteBoardScene::useLaserPen()
 {
-    m_laserPen = laserPen;
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardLaserPen*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardLaserPen(this));
+        emit toolChanged();
+    }
 }
 
-void WhiteBoardScene::setEraser(const WhiteBoardEraser& eraser)
+void WhiteBoardScene::useEraser()
 {
-    m_eraser = eraser;
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardEraser*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardEraser(this));
+        emit toolChanged();
+    }
 }
 
-WhiteBoardNormalPen WhiteBoardScene::normalPen() const
+// ------------------------------------------------------------------------------------
+// 工具相关的类
+WhiteBoardNormalPen::WhiteBoardNormalPen(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+    , m_width(4)
+    , m_color(Qt::red)
 {
-    return m_normalPen;
 }
 
-WhiteBoardHighlightPen WhiteBoardScene::hightlightPen() const
+void WhiteBoardNormalPen::devicePress(const QPointF& startPos)
 {
-    return m_highlightPen;
+    m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_width, QBrush(m_color)));
+    m_eventTempItem->setZValue(m_scene->backgroundZValue()  + 1);
+    // 添加操作使用Command进行
+    AddItemCommand* command = new AddItemCommand(m_scene.get(), m_eventTempItem);
+    m_scene->undoStack()->push(command);
+    m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(m_eventTempItem.data()));
+    // 后面的QSizeF是随便给的，因为我知道ControlCurveObserver在其formItem只处理leftTop点
+    m_curveObserver->addPointToCurve(startPos);
 }
 
-WhiteBoardLaserPen WhiteBoardScene::laserPen() const
+void WhiteBoardNormalPen::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
 {
-    return m_laserPen;
+    Q_UNUSED(lastScenePos);
+    if (m_curveObserver.isNull())
+        return;
+    m_curveObserver->addPointToCurve(scenePos);
 }
 
-WhiteBoardEraser WhiteBoardScene::eraser() const
+void WhiteBoardNormalPen::deviceRelease()
 {
-    return m_eraser;
+    // 同一时间只处理同一个工具的一套(press-move-release)流程，所以不用担心同步问题
+    m_curveObserver.reset(nullptr);
+    // item已经在本次事件中塑造完成，后续交给Scene管理
+    // m_eventTempItem不再能操作已经塑造完成的Item
+    m_eventTempItem.reset(nullptr);
 }
 
-void WhiteBoardScene::selectTool(WhiteBoardTool toolType)
+
+WhiteBoardHighlightPen::WhiteBoardHighlightPen(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+    , m_color(Qt::yellow)
+    , m_width(40)
+    , m_opacity(0.5)
+    , m_openStraightLineMode(true)
 {
-    m_nowUseTool = toolType;
-    emit toolChanged(m_nowUseTool);
 }
 
-void WhiteBoardScene::initNormalPen()
+void WhiteBoardHighlightPen::devicePress(const QPointF& startPos)
 {
-    // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
-    // 后续扩展了配置类的时候再回来对此处进行优化
-    m_normalPen.color = Qt::red;
-    m_normalPen.width = 4;
+    m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_width, QBrush(m_color)));
+    m_eventTempItem->setZValue(m_scene->backgroundZValue()  + 1);
+    m_eventTempItem->setOpacity(m_opacity);
+    // 添加操作使用Command进行
+    AddItemCommand* command = new AddItemCommand(m_scene.get(), m_eventTempItem);
+    m_scene->undoStack()->push(command); // add操作真正执行是在push方法内
+    if (!m_openStraightLineMode)
+    {
+        m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(m_eventTempItem.data()));
+    }
+    else
+    {
+        m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlLineObserver(m_eventTempItem.data()));
+    }
+    m_curveObserver->addPointToCurve(startPos);
 }
 
-void WhiteBoardScene::initHighlightPen()
+void WhiteBoardHighlightPen::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
 {
-    // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
-    // 后续扩展了配置类的时候再回来对此处进行优化
-    m_highlightPen.color = Qt::darkYellow;
-    m_highlightPen.width = 40;
-    m_highlightPen.opacity = 0.5;
-    m_highlightPen.openStraightLineMode = true;
+    Q_UNUSED(lastScenePos);
+    if (m_curveObserver.isNull())
+        return;
+    m_curveObserver->addPointToCurve(scenePos);
 }
 
-void WhiteBoardScene::initLaserPen()
+void WhiteBoardHighlightPen::deviceRelease()
 {
-    // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
-    // 后续扩展了配置类的时候再回来对此处进行优化
-    m_laserPen.color = Qt::green;
+    m_curveObserver.reset(nullptr);
+    // item已经在本次事件中塑造完成，后续交给Scene管理
+    // m_eventTempItem不再能操作已经塑造完成的Item
+    m_eventTempItem.reset(nullptr);
 }
 
-void WhiteBoardScene::initEraser()
+WhiteBoardLaserPen::WhiteBoardLaserPen(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+    , m_color(Qt::red)
+    , m_laserItemTempList(6)
 {
-    // 这里因为没有实现配置类，所以采用硬编码的方式来初始化
-    // 后续扩展了配置类的时候再回来对此处进行优化
-    m_eraser.radius = 70;
-    m_eraser.eraseWholeItem = false;
+    connect(m_scene.get(), &WhiteBoardScene::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
 }
+
+void WhiteBoardLaserPen::devicePress(const QPointF& startPos)
+{
+    QSharedPointer<BaseGraphicsItem> laserItem(new BaseGraphicsItem(FIXED_WIDTH, QBrush(Qt::white)));
+    laserItem->setZValue(m_scene->backgroundZValue()  + 2);
+    // 添加阴影效果
+    QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect;
+    effect->setOffset(0, 0);
+    effect->setBlurRadius(15);
+    effect->setColor(m_color);
+    laserItem->setGraphicsEffect(effect);
+    m_scene->addItem(laserItem.data());
+    // 加入新Item, 重置计时时间
+    m_laserItemTempList.push(laserItem);
+
+    m_curveObserver = QSharedPointer<ControlCurveObserver>(new ControlCurveObserver(laserItem.data()));
+    m_curveObserver->addPointToCurve(startPos);
+
+}
+
+void WhiteBoardLaserPen::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
+{
+    Q_UNUSED(lastScenePos)
+    if (m_curveObserver.isNull())
+        return;
+    m_curveObserver->addPointToCurve(scenePos);
+}
+
+void WhiteBoardLaserPen::deviceRelease()
+{
+    m_curveObserver.reset(nullptr);
+    // 操作结束，开始计时
+    m_laserItemTempList.startTimer();
+}
+
+
+WhiteBoardEraser::WhiteBoardEraser(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+    , m_radius(60)
+    , m_eraseWholeItem(false)
+{
+}
+
+void WhiteBoardEraser::devicePress(const QPointF& startPos)
+{
+    if (!m_eraseWholeItem)
+    {
+        m_eraseItemsCommand = new EraseItemsCommand;
+        m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_radius, QBrush(Qt::darkGray)));
+        m_eventTempItem->setZValue(m_scene->backgroundZValue() + 2);
+        m_eventTempItem->setOpacity(0.6);
+
+        m_scene->addItem(m_eventTempItem.data()); // 临时Item不需要加入UndoStack
+        QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_radius);
+        // 橡皮擦是临时用来显示的Item，不需要使用Command
+        m_eventTempItem->setStrokePath(circle);
+
+        m_scene->handleCollidingItems(circle, m_eventTempItem, m_eraseItemsCommand);
+    }
+    else
+    {
+        m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(MIN_RADIUS, QBrush(Qt::black)));
+
+        m_scene->addItem(m_eventTempItem.data()); // 临时Item不需要加入UndoStack
+        QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), MIN_RADIUS);
+        m_eventTempItem->setStrokePath(circle);
+
+        m_scene->eraseCollidingWholeItems(circle, m_eventTempItem);
+    }
+}
+
+void WhiteBoardEraser::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
+{
+    if (m_eventTempItem.isNull()){
+        return;
+    }
+    qreal radius;
+    if (!m_eraseWholeItem)
+        radius = m_radius;
+    else
+        radius = MIN_RADIUS;
+    QPainterPath track = m_eventTempItem->lineToStroke(QLineF(lastScenePos, scenePos), radius);
+    if (!m_eraseWholeItem)
+        m_scene->handleCollidingItems(track, m_eventTempItem, m_eraseItemsCommand);
+    else
+        m_scene->eraseCollidingWholeItems(track, m_eventTempItem);
+    QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(scenePos, scenePos), radius);
+    m_eventTempItem->setStrokePath(circle);
+    m_scene->update();
+}
+
+void WhiteBoardEraser::deviceRelease()
+{
+    m_eventTempItem.reset(nullptr);
+    if (!m_eraseWholeItem)
+    {
+        if (m_eraseItemsCommand->size() != 0) {
+            m_eraseItemsCommand->undo();
+            m_scene->undoStack()->push(m_eraseItemsCommand);
+            m_eraseItemsCommand = nullptr;
+        }
+    }
+}
+
 // WhiteBoardScene::LaserStrokeTepmList
 LaserStrokeTempList::LaserStrokeTempList(int countdownSecond)
     : QObject()
@@ -331,7 +425,6 @@ void LaserStrokeTempList::push(const QSharedPointer<BaseGraphicsItem>& laserStro
 void LaserStrokeTempList::startTimer()
 {
     m_timer.reset(new QTimer(this));
-    connect(m_timer.get(), &QTimer::timeout, this, &LaserStrokeTempList::handleTimeout);
     m_timer->start(200);
 }
 
@@ -352,14 +445,11 @@ void LaserStrokeTempList::handleTimeout()
     m_countTimes += 200;
 }
 
-void LaserStrokeTempList::toolChanged(WhiteBoardTool tool)
+void LaserStrokeTempList::toolChanged()
 {
-    if (tool != WhiteBoardTool::LaserPen)
-    {
-        m_laserList.clear();
-        m_countTimes = 0;
-        m_timer.reset();
-    }
+    m_laserList.clear();
+    m_countTimes = 0;
+    m_timer.reset();
 }
 
 

@@ -43,22 +43,22 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
 
 void WhiteBoardView::changeToNormalPen()
 {
-    m_scene->selectTool(WhiteBoardTool::NormalPen);
+    m_scene->useNormalPen();
 }
 
 void WhiteBoardView::changeToHighlightPen()
 {
-    m_scene->selectTool(WhiteBoardTool::HighlightPen);
+    m_scene->useHighlightPen();
 }
 
 void WhiteBoardView::changeToLaserPen()
 {
-    m_scene->selectTool(WhiteBoardTool::LaserPen);
+    m_scene->useLaserPen();
 }
 
 void WhiteBoardView::changeToEraser()
 {
-    m_scene->selectTool(WhiteBoardTool::Eraser);
+    m_scene->useEraser();
 }
 
 void WhiteBoardView::save()
