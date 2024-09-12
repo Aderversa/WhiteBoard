@@ -11,6 +11,7 @@ WhiteBoardScene::WhiteBoardScene(BackgroundItem* background)
     : QGraphicsScene()
     , m_backgroundItem(background)
     , m_undoStack(new QUndoStack)
+    , m_tool(new WhiteBoardNormalPen(this))
 {
     if (m_backgroundItem == nullptr)
     {
@@ -43,7 +44,10 @@ void WhiteBoardScene::inputDeviceRelease()
 
 void WhiteBoardScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    // QGraphicsScene::mousePressEvent(event);
+    QGraphicsScene::mousePressEvent(event);
+    if (event->isAccepted()) {
+        return;
+    }
     if (event->button() == Qt::LeftButton)
     {
         inputDevicePress(event->scenePos());
@@ -56,7 +60,10 @@ void WhiteBoardScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void WhiteBoardScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    // QGraphicsScene::mouseMoveEvent(event);
+    QGraphicsScene::mouseMoveEvent(event);
+    if (event->isAccepted()) {
+        return;
+    }
     if (event->buttons() == Qt::LeftButton)
     {
         inputDeviceMove(event->scenePos(), event->lastScenePos());
@@ -69,7 +76,10 @@ void WhiteBoardScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 
 void WhiteBoardScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
-    // QGraphicsScene::mouseReleaseEvent(event);
+    QGraphicsScene::mouseReleaseEvent(event);
+    if (event->isAccepted()) {
+        return;
+    }
     if (event->button() == Qt::LeftButton)
     {
         inputDeviceRelease();
@@ -205,6 +215,14 @@ void WhiteBoardScene::useEraser()
         emit toolChanged();
     }
 }
+void WhiteBoardScene::useShapePen()
+{
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardShapePen*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardShapePen(this));
+        emit toolChanged();
+    }
+}
 
 // ------------------------------------------------------------------------------------
 // 工具相关的类
@@ -292,9 +310,9 @@ void WhiteBoardHighlightPen::deviceRelease()
 WhiteBoardLaserPen::WhiteBoardLaserPen(WhiteBoardScene* scene)
     : WhiteBoardAbstractTool(scene)
     , m_color(Qt::red)
-    , m_laserItemTempList(6)
+    , m_laserItemTempList(4)
 {
-    connect(m_scene.get(), &WhiteBoardScene::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
+    connect(scene, &WhiteBoardScene::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
 }
 
 void WhiteBoardLaserPen::devicePress(const QPointF& startPos)
@@ -425,12 +443,24 @@ void LaserStrokeTempList::push(const QSharedPointer<BaseGraphicsItem>& laserStro
 void LaserStrokeTempList::startTimer()
 {
     m_timer.reset(new QTimer(this));
-    m_timer->start(200);
+    connect(m_timer.get(), &QTimer::timeout, this, &LaserStrokeTempList::handleTimeout);
+    m_timer->start(unit);
 }
 
 void LaserStrokeTempList::handleTimeout()
 {
     int remainCount = m_countdown - m_countTimes;
+    qreal opacity = remainCount / 1000.0;
+    if (opacity > 1) {
+        remainCount = 1;
+    }
+    else if (opacity < 0) {
+        remainCount = 0;
+    }
+    for (auto& pItem : m_laserList)
+    {
+        pItem->setOpacity(opacity);
+    }
     switch(remainCount)
     {
     case 0:
@@ -442,7 +472,7 @@ void LaserStrokeTempList::handleTimeout()
     default:
         break;
     }
-    m_countTimes += 200;
+    m_countTimes += unit;
 }
 
 void LaserStrokeTempList::toolChanged()
@@ -450,6 +480,62 @@ void LaserStrokeTempList::toolChanged()
     m_laserList.clear();
     m_countTimes = 0;
     m_timer.reset();
+}
+
+WhiteBoardShapePen::WhiteBoardShapePen(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+    , m_width(6)
+    , m_opacity(1)
+    , m_color(Qt::red)
+{
+}
+
+void WhiteBoardShapePen::devicePress(const QPointF& startPos)
+{
+    m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_width, QBrush(m_color)));
+
+    AddItemCommand* command = new AddItemCommand(m_scene.get(), m_eventTempItem);
+    m_scene->undoStack()->push(command);
+
+    m_startPoint.reset(new QPointF(startPos));
+    m_observer = new ControlRectangleObserver(m_eventTempItem.get());
+    m_observer->formItem(QRectF(startPos, startPos), 0.0);
+}
+
+void WhiteBoardShapePen::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
+{
+    Q_UNUSED(lastScenePos);
+    if (m_observer.isNull() || m_startPoint.isNull()) {
+        return;
+    }
+    QPointF center = (scenePos + *m_startPoint) / 2;
+    qreal width = qAbs(scenePos.x() - m_startPoint->x());
+    qreal height = qAbs(scenePos.y() - m_startPoint->y());
+    center.setX(center.x() - width / 2);
+    center.setY(center.y() - height / 2);
+    QRectF rect(center.x(), center.y(), width, height);
+    m_observer->formItem(rect, 0.0);
+}
+
+void WhiteBoardShapePen::deviceRelease()
+{
+    if (m_eventTempItem.isNull() || m_startPoint.isNull() || m_observer.isNull()) {
+        return;
+    }
+    EightWayMovementGroup* group = new EightWayMovementGroup(m_eventTempItem->boundingRect());
+    m_observer->setControlGroup(group);
+    m_scene->addItem(group);
+    connect(m_observer.get(), &ControlGroupObserver::needToDestroy, this, &WhiteBoardShapePen::destroyObserver);
+    m_startPoint.reset(nullptr);
+    m_eventTempItem.reset(nullptr);
+    m_observer = nullptr;
+    m_scene->update();
+}
+
+void WhiteBoardShapePen::destroyObserver()
+{
+    ControlGroupObserver* observer = qobject_cast<ControlGroupObserver*>(sender());
+    delete observer;
 }
 
 

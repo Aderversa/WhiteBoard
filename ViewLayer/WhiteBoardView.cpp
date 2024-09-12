@@ -14,6 +14,7 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     , m_eraserBtn(new QPushButton(tr("橡皮擦"), this))
     , m_undoBtn(new QPushButton(tr("撤销"), this))
     , m_redoBtn(new QPushButton(tr("重做"), this))
+    , m_shapeBtn(new QPushButton(tr("图形"), this))
     , m_saveBtn(new QPushButton(tr("保存到桌面"), this))
     , m_btnLayout(new QHBoxLayout)
     , m_primeLayout(new QVBoxLayout(this))
@@ -24,6 +25,7 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     m_btnLayout->addWidget(m_hightlightPenBtn);
     m_btnLayout->addWidget(m_laserPenBtn);
     m_btnLayout->addWidget(m_eraserBtn);
+    m_btnLayout->addWidget(m_shapeBtn);
     m_btnLayout->addWidget(m_undoBtn);
     m_btnLayout->addWidget(m_redoBtn);
     m_btnLayout->addWidget(m_saveBtn);
@@ -34,6 +36,7 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     connect(m_hightlightPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToHighlightPen);
     connect(m_laserPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToLaserPen);
     connect(m_eraserBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToEraser);
+    connect(m_shapeBtn, &QPushButton::clicked, m_scene.get(), &WhiteBoardScene::useShapePen);
     connect(m_undoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::undo);
     connect(m_redoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::redo);
     connect(m_scene->undoStack().get(), &QUndoStack::indexChanged, this, &WhiteBoardView::printIndex);

@@ -62,6 +62,7 @@ public slots: // 更换工具的函数
     void useHighlightPen();
     void useLaserPen();
     void useEraser();
+    void useShapePen();
 
 signals:
     void toolChanged();
@@ -94,6 +95,7 @@ private:
     QScopedPointer<QTimer> m_timer;
     int m_countdown;
     int m_countTimes = 0;
+    constexpr static int unit = 10;
 };
 
 class WhiteBoardAbstractTool
@@ -178,14 +180,32 @@ private:
     constexpr static qreal MIN_RADIUS = 10;
 };
 
-class WhiteBoardShapePen : public WhiteBoardAbstractTool {
+class WhiteBoardShapePen : public QObject, public WhiteBoardAbstractTool {
+    Q_OBJECT
+public:
+    enum ItemShape {
+        Rectangle = 0,
+    };
+
 public:
     WhiteBoardShapePen(WhiteBoardScene* scene);
-    virtual void devicePress(const QPointF& startPos) = 0;
-    virtual void deviceMove(const QPointF& scenePos, const QPointF& lastScenePos) = 0;
-    virtual void deviceRelease() = 0;
+    void devicePress(const QPointF& startPos) override;
+    void deviceMove(const QPointF& scenePos, const QPointF& lastScenePos) override;
+    void deviceRelease() override;
+
+private slots:
+    void destroyObserver();
 
 private:
+    QSharedPointer<BaseGraphicsItem> m_eventTempItem{nullptr};
+    QPointer<ControlGroupObserver> m_observer{nullptr};
+    QScopedPointer<QPointF> m_startPoint{nullptr};
+
+private:
+    qreal m_width;
+    qreal m_opacity;
+    QColor m_color;
+    ItemShape m_shape;
 };
 
 

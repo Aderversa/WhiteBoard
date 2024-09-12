@@ -58,7 +58,6 @@ EightWayMovementGroup::EightWayMovementGroup(const QRectF& rect, QGraphicsItem* 
     connect(m_bottomRight, &ControlPointItem::posMove, this, &EightWayMovementGroup::bottomRightMove);
     connect(m_bottomMid, &ControlPointItem::posMove, this, &EightWayMovementGroup::bottomMidMove);
     connect(m_bottomLeft, &ControlPointItem::posMove, this, &EightWayMovementGroup::bottomLeftMove);
-
 }
 
 EightWayMovementGroup::~EightWayMovementGroup()

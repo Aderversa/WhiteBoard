@@ -13,6 +13,7 @@ ControlGroupObserver::~ControlGroupObserver()
 void ControlGroupObserver::setControlGroup(ControlPointGroup *controlGroup)
 {
     m_controlGroup = controlGroup;
+    formItem(controlGroup->boundingRect(), 0.0);
     connect(m_controlGroup, &ControlPointGroup::rectInfo,
             this, &ControlGroupObserver::formItem);
     connect(m_controlGroup, &ControlPointGroup::needToDestroy,
@@ -26,11 +27,8 @@ ItemShaper* ControlGroupObserver::itemShaper() const
 
 void ControlGroupObserver::handleControlPointDestroy()
 {
-    if (m_controlGroup) {
-        // 不能调用delete，因为你不知道这个指针指向的对象是否是new创建的
-        // delete和new的不配对会发生编译错误
-        m_controlGroup->~ControlPointGroup();
-        m_controlGroup = nullptr;
+    if (!m_controlGroup.isNull()) {
+        delete m_controlGroup.data();
     }
     emit needToDestroy();
 }

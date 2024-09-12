@@ -17,7 +17,9 @@ public: // 重写QGraphicsItem的一些方法
     QRectF boundingRect() const;
 
 protected: // 重写部分QGraphicsItem的事件处理函数
+    void mousePressEvent(QGraphicsSceneMouseEvent* event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 
 public: // 构造和析构
     explicit ControlPointItem(const QPointF& pos, QGraphicsItem* parent = nullptr);

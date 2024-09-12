@@ -39,11 +39,22 @@ void ControlPointItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 // end of 重写QGraphicsItem的一些方法
 // ----------------------------------------------------------------------
 // 重写部分QGraphicsItem的事件处理函数
+void ControlPointItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    event->accept();
+}
+
 void ControlPointItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
+    event->accept();
     qreal dx = event->pos().x() - event->lastPos().x();
     qreal dy = event->pos().y() - event->lastPos().y();
     emit posMove(dx, dy);
+}
+
+void ControlPointItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+{
+    event->accept();
 }
 // end of 重写部分QGraphicsItem的事件处理函数
 // ----------------------------------------------------------------------

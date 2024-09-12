@@ -3,6 +3,7 @@
 
 #include "ItemLayer/ItemShaper.h"
 #include "ItemLayer/ControlPointGroup.h"
+#include <QPointer>
 
 namespace ADEV {
 
@@ -29,7 +30,7 @@ signals:
 
 private:
     ItemShaper* m_itemShaper;
-    ControlPointGroup* m_controlGroup;
+    QPointer<ControlPointGroup> m_controlGroup;
 };
 
 class ControlRectangleObserver : public ControlGroupObserver
