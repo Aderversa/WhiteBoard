@@ -1,10 +1,11 @@
 #include "WhiteBoard.h"
 
 #include <QApplication>
-#include <QPdfView>
-#include "SceneLayer/WhiteBoardScene.h"
-#include "ViewLayer/WhiteBoardView.h"
 #include <QGraphicsView>
+
+#include "SceneLayer/WhiteBoardScene.h"
+#include "ViewLayer/WhiteBoardViewer.h"
+#include "ViewLayer/WhiteBoardView.h"
 
 // EightWayMovementGroup, BaseGraphicsItem, ControlRectangleObserver的集成测试
 int testForBase(int argc, char *argv[])
@@ -54,13 +55,10 @@ int testForCurve(int argc, char* argv[])
     return a.exec();
 }
 
-struct Integer{
-    int i;
-};
-
 int main(int argc, char** argv)
 {
     using namespace ADEV;
+    QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     QApplication a(argc, argv);
     // QImage image(QString(":/BackgroundImages/3.png"));
     // BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());

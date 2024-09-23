@@ -12,6 +12,7 @@
 #include "SceneLayer/WhiteBoardTools.h"
 #include "ItemLayer/BaseGraphicsItem.h"
 #include "ItemLayer/ControlGroupObserver.h"
+#include "ItemLayer/BaseGraphicsItemGroup.h"
 #include "SceneLayer/BackgroundItem.h"
 
 class QTimer;
@@ -33,12 +34,6 @@ public:
     void addItem(QGraphicsItem* item);
     QSharedPointer<BaseGraphicsItem> getItem(BaseGraphicsItem* pItem) ;
 
-public: // 碰撞处理
-    void handleCollidingItems(const QPainterPath& collidesArea,
-                              const QSharedPointer<BaseGraphicsItem>& pointer,
-                              EraseItemsCommand* commands);
-    void eraseCollidingWholeItems(const QPainterPath& collidesArea,
-                                  const QSharedPointer<BaseGraphicsItem>& pointer);
 
 private: // 对实际事件的抽象处理
     void inputDevicePress(const QPointF& startPos);
@@ -54,8 +49,10 @@ public: // getter & setter
     // 如果BackgroundItem是BackgroundImageItem，则不可更换
     // 更换的时候若新background不是原来的background，则原本的background会被释放
     bool changeBackground(BackgroundItem* background);
-    QSharedPointer<QUndoStack> undoStack() {return m_undoStack;}
-    int backgroundZValue()const {return m_backgroundItem->zValue();}
+    QSharedPointer<QUndoStack> undoStack() { return m_undoStack; }
+    int backgroundZValue() const { return m_backgroundItem->zValue(); }
+    BackgroundItem* background() const { return m_backgroundItem.get(); }
+    WhiteBoardAbstractTool* tool() const { return m_tool.get(); }
 
 public slots: // 更换工具的函数
     void useNormalPen();
@@ -63,6 +60,7 @@ public slots: // 更换工具的函数
     void useLaserPen();
     void useEraser();
     void useShapePen();
+    void useRubberBand();
 
 signals:
     void toolChanged();
@@ -170,6 +168,13 @@ public:
     void deviceMove(const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease() override;
 
+public: // 碰撞处理
+    void handleCollidingItems(const QPainterPath& collidesArea,
+                              const QSharedPointer<BaseGraphicsItem>& pointer,
+                              EraseItemsCommand* commands);
+    void eraseCollidingWholeItems(const QPainterPath& collidesArea,
+                                  const QSharedPointer<BaseGraphicsItem>& pointer);
+
 private:
     EraseItemsCommand* m_eraseItemsCommand = nullptr;
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
@@ -207,6 +212,21 @@ private:
     qreal m_opacity;
     QColor m_color;
     ItemShape m_shape;
+};
+
+class WhiteBoardRubberBand : public QObject, public WhiteBoardAbstractTool {
+    Q_OBJECT
+public:
+    explicit WhiteBoardRubberBand(WhiteBoardScene* scene);
+    void devicePress(const QPointF& startPos) override;
+    void deviceMove(const QPointF& scenePos, const QPointF& lastScenePos) override;
+    void deviceRelease() override;
+
+private slots:
+    void destroyGroup();
+
+private:
+    QSharedPointer<BaseGraphicsItemGroup> m_group{nullptr};
 };
 
 

@@ -68,6 +68,20 @@ private:
     QList<QSharedPointer<EraseItemCommand>> m_eraseCommandList;
 };
 
+class MoveItemCommand : public QUndoCommand
+{
+public:
+    MoveItemCommand(const QPointF& beforeMove, const QPointF& afterMove, const QSharedPointer<BaseGraphicsItem>& item);
+    ~MoveItemCommand();
+    void redo() override;
+    void undo() override;
+
+private:
+    QSharedPointer<BaseGraphicsItem> m_movedItem;
+    QPointF m_beforeMovePos;
+    QPointF m_afterMovePos;
+};
+
 } // end of namespace ADEV
 
 #endif // BASICCOMMAND_H

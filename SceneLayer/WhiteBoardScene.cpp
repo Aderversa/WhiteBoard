@@ -105,23 +105,23 @@ bool WhiteBoardScene::changeBackground(BackgroundItem* background)
     return true;
 }
 
-void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea,
+void WhiteBoardEraser::handleCollidingItems(const QPainterPath& collidesArea,
                                            const QSharedPointer<BaseGraphicsItem>& pointer,
                                            EraseItemsCommand* commands)
 {
-    if (dynamic_cast<WhiteBoardEraser*>(m_tool.data()) == nullptr) {
+    if (dynamic_cast<WhiteBoardEraser*>(m_scene->tool()) == nullptr) {
         return;
     }
-    QList<QGraphicsItem*> items = this->items(collidesArea);
+    QList<QGraphicsItem*> items = m_scene->items(collidesArea);
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem.get() && pItem != pointer.get())
+        if (pItem != m_scene->background() && pItem != pointer.get())
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem != nullptr) {
-                QSharedPointer<BaseGraphicsItem> pEraseItem = getItem(eraseItem);
+                QSharedPointer<BaseGraphicsItem> pEraseItem = m_scene->getItem(eraseItem);
                 if (!pEraseItem.isNull()) {
-                    QSharedPointer<EraseItemCommand> command(new EraseItemCommand(this, pEraseItem, pointer->shape()));
+                    QSharedPointer<EraseItemCommand> command(new EraseItemCommand(m_scene.get(), pEraseItem, collidesArea));
                     commands->push(command);
                 }
             }
@@ -129,22 +129,22 @@ void WhiteBoardScene::handleCollidingItems(const QPainterPath& collidesArea,
     }
 }
 
-void WhiteBoardScene::eraseCollidingWholeItems(const QPainterPath& collidesArea,
+void WhiteBoardEraser::eraseCollidingWholeItems(const QPainterPath& collidesArea,
                                                const QSharedPointer<BaseGraphicsItem>& pointer)
 {
-    if (dynamic_cast<WhiteBoardEraser*>(m_tool.get()) == nullptr) {
+    if (dynamic_cast<WhiteBoardEraser*>(m_scene->tool()) == nullptr) {
         return;
     }
-    QList<QGraphicsItem*> items = this->items(collidesArea);
+    QList<QGraphicsItem*> items = m_scene->items(collidesArea);
     for (auto pItem : items)
     {
-        if (pItem != m_backgroundItem.get() && pItem != pointer.get())
+        if (pItem != m_scene->background() && pItem != pointer.get())
         {
             BaseGraphicsItem* eraseItem = dynamic_cast<BaseGraphicsItem*>(pItem);
             if (eraseItem) {
-                QSharedPointer<BaseGraphicsItem> pEraseItem = getItem(eraseItem);
-                DeleteItemCommand* command = new DeleteItemCommand(this, pEraseItem);
-                m_undoStack->push(command);
+                QSharedPointer<BaseGraphicsItem> pEraseItem = m_scene->getItem(eraseItem);
+                DeleteItemCommand* command = new DeleteItemCommand(m_scene.get(), pEraseItem);
+                m_scene->undoStack()->push(command);
             }
         }
     }
@@ -223,6 +223,14 @@ void WhiteBoardScene::useShapePen()
         emit toolChanged();
     }
 }
+void WhiteBoardScene::useRubberBand()
+{
+    // dynamic_cast失败说明本来就是这个工具与原本的工具不同，需要更换
+    if (dynamic_cast<WhiteBoardRubberBand*>(m_tool.get()) == nullptr) {
+        m_tool.reset(new WhiteBoardRubberBand(this));
+        emit toolChanged();
+    }
+}
 
 // ------------------------------------------------------------------------------------
 // 工具相关的类
@@ -266,9 +274,9 @@ void WhiteBoardNormalPen::deviceRelease()
 WhiteBoardHighlightPen::WhiteBoardHighlightPen(WhiteBoardScene* scene)
     : WhiteBoardAbstractTool(scene)
     , m_color(Qt::yellow)
-    , m_width(40)
+    , m_width(20)
     , m_opacity(0.5)
-    , m_openStraightLineMode(true)
+    , m_openStraightLineMode(false)
 {
 }
 
@@ -296,11 +304,13 @@ void WhiteBoardHighlightPen::deviceMove(const QPointF& scenePos, const QPointF& 
     Q_UNUSED(lastScenePos);
     if (m_curveObserver.isNull())
         return;
-    m_curveObserver->addPointToCurve(scenePos);
+    if (m_eventTempItem->shape().length() < 100000)
+        m_curveObserver->addPointToCurve(scenePos);
 }
 
 void WhiteBoardHighlightPen::deviceRelease()
 {
+    qDebug() << m_eventTempItem->shape().length();
     m_curveObserver.reset(nullptr);
     // item已经在本次事件中塑造完成，后续交给Scene管理
     // m_eventTempItem不再能操作已经塑造完成的Item
@@ -359,19 +369,20 @@ WhiteBoardEraser::WhiteBoardEraser(WhiteBoardScene* scene)
 
 void WhiteBoardEraser::devicePress(const QPointF& startPos)
 {
+    if (!m_eventTempItem.isNull()) {
+        return;
+    }
     if (!m_eraseWholeItem)
     {
         m_eraseItemsCommand = new EraseItemsCommand;
         m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_radius, QBrush(Qt::darkGray)));
         m_eventTempItem->setZValue(m_scene->backgroundZValue() + 2);
         m_eventTempItem->setOpacity(0.6);
-
         m_scene->addItem(m_eventTempItem.data()); // 临时Item不需要加入UndoStack
         QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), m_radius);
         // 橡皮擦是临时用来显示的Item，不需要使用Command
         m_eventTempItem->setStrokePath(circle);
-
-        m_scene->handleCollidingItems(circle, m_eventTempItem, m_eraseItemsCommand);
+        handleCollidingItems(circle, m_eventTempItem, m_eraseItemsCommand);
     }
     else
     {
@@ -381,7 +392,7 @@ void WhiteBoardEraser::devicePress(const QPointF& startPos)
         QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(startPos, startPos), MIN_RADIUS);
         m_eventTempItem->setStrokePath(circle);
 
-        m_scene->eraseCollidingWholeItems(circle, m_eventTempItem);
+        eraseCollidingWholeItems(circle, m_eventTempItem);
     }
 }
 
@@ -397,9 +408,9 @@ void WhiteBoardEraser::deviceMove(const QPointF& scenePos, const QPointF& lastSc
         radius = MIN_RADIUS;
     QPainterPath track = m_eventTempItem->lineToStroke(QLineF(lastScenePos, scenePos), radius);
     if (!m_eraseWholeItem)
-        m_scene->handleCollidingItems(track, m_eventTempItem, m_eraseItemsCommand);
+        handleCollidingItems(track, m_eventTempItem, m_eraseItemsCommand);
     else
-        m_scene->eraseCollidingWholeItems(track, m_eventTempItem);
+        eraseCollidingWholeItems(track, m_eventTempItem);
     QPainterPath circle = m_eventTempItem->lineToStroke(QLineF(scenePos, scenePos), radius);
     m_eventTempItem->setStrokePath(circle);
     m_scene->update();
@@ -410,7 +421,7 @@ void WhiteBoardEraser::deviceRelease()
     m_eventTempItem.reset(nullptr);
     if (!m_eraseWholeItem)
     {
-        if (m_eraseItemsCommand->size() != 0) {
+        if (m_eraseItemsCommand && m_eraseItemsCommand->size() != 0) {
             m_eraseItemsCommand->undo();
             m_scene->undoStack()->push(m_eraseItemsCommand);
             m_eraseItemsCommand = nullptr;
@@ -547,6 +558,55 @@ void WhiteBoardShapePen::destroyObserver()
 {
     ControlGroupObserver* observer = qobject_cast<ControlGroupObserver*>(sender());
     delete observer;
+}
+
+WhiteBoardRubberBand::WhiteBoardRubberBand(WhiteBoardScene* scene)
+    : WhiteBoardAbstractTool(scene)
+{
+}
+
+void WhiteBoardRubberBand::devicePress(const QPointF& startPos)
+{
+    m_group = QSharedPointer<BaseGraphicsItemGroup>(new BaseGraphicsItemGroup(startPos));
+    connect(m_group.get(), &BaseGraphicsItemGroup::needToDestroy, this, &WhiteBoardRubberBand::destroyGroup);
+    m_scene->addItem(m_group.get());
+}
+
+void WhiteBoardRubberBand::deviceMove(const QPointF& scenePos, const QPointF& lastScenePos)
+{
+    Q_UNUSED(lastScenePos);
+    m_group->appendPoint(scenePos);
+    m_scene->update();
+}
+
+void WhiteBoardRubberBand::destroyGroup()
+{
+    if (!m_group.isNull()) {
+        m_group.clear();
+        m_scene->update();
+    }
+}
+
+void WhiteBoardRubberBand::deviceRelease()
+{
+    m_group->complete();
+    QList<QGraphicsItem*> items = m_scene->collidingItems(m_group.get(), Qt::IntersectsItemShape);
+    qDebug() << items.size();
+    if (items.empty()) {
+        m_group.reset(nullptr);
+    }
+    else if (items.size() == 1 && items.front() == m_scene->background()) {
+        m_group.reset(nullptr);
+        qDebug() << "only background";
+    }
+    else {
+        for (auto& pItem : items) {
+            if (pItem != m_scene->background()){
+                m_group->addToGroup(pItem);
+            }
+        }
+    }
+    m_scene->update();
 }
 
 

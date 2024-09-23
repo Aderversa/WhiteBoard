@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     ItemLayer/BaseGraphicsItem.cpp \
+    ItemLayer/BaseGraphicsItemGroup.cpp \
     ItemLayer/ControlGroupObserver.cpp \
     ItemLayer/ControlPointGroup.cpp \
     ItemLayer/ControlPointItem.cpp \
@@ -17,11 +18,13 @@ SOURCES += \
     SceneLayer/BasicCommand.cpp \
     SceneLayer/WhiteBoardScene.cpp \
     ViewLayer/WhiteBoardView.cpp \
+    ViewLayer/WhiteBoardViewer.cpp \
     main.cpp \
     WhiteBoard.cpp
 
 HEADERS += \
     ItemLayer/BaseGraphicsItem.h \
+    ItemLayer/BaseGraphicsItemGroup.h \
     ItemLayer/ControlGroupObserver.h \
     ItemLayer/ControlPointGroup.h \
     ItemLayer/ControlPointItem.h \
@@ -30,6 +33,7 @@ HEADERS += \
     SceneLayer/BasicCommand.h \
     SceneLayer/WhiteBoardScene.h \
     ViewLayer/WhiteBoardView.h \
+    ViewLayer/WhiteBoardViewer.h \
     WhiteBoard.h
 
 # Default rules for deployment.

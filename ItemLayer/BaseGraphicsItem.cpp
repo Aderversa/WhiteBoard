@@ -11,6 +11,7 @@ BaseGraphicsItem::BaseGraphicsItem(qreal strokeWidth, const QBrush& brush, QGrap
     , m_strokeWidth(strokeWidth)
     , m_brush(brush)
 {
+    setPos(0, 0);
     m_pen.setStyle(Qt::NoPen);
 }
 
@@ -102,8 +103,7 @@ QRectF BaseGraphicsItem::boundingRect() const
 
 QPainterPath BaseGraphicsItem::shape() const
 {
-    // m_strokePath是利用Scene的坐标来生成的
-    return mapFromScene(m_strokePath);
+    return m_strokePath;
 }
 
 bool BaseGraphicsItem::collidesWithItem(const QGraphicsItem *other, Qt::ItemSelectionMode mode) const
@@ -120,6 +120,7 @@ void BaseGraphicsItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
+    painter->setRenderHint(QPainter::Antialiasing);
     painter->setPen(pen());
     painter->setBrush(brush());
     painter->drawPath(m_strokePath);

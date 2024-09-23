@@ -158,4 +158,25 @@ int EraseItemsCommand::size() const
     return m_eraseCommandList.size();
 }
 
+MoveItemCommand::MoveItemCommand(const QPointF& beforeMove, const QPointF& afterMove, const QSharedPointer<BaseGraphicsItem>& item)
+    : m_movedItem(item)
+    , m_beforeMovePos(beforeMove)
+    , m_afterMovePos(afterMove)
+{
+}
+
+MoveItemCommand::~MoveItemCommand()
+{
+}
+
+void MoveItemCommand::redo()
+{
+    m_movedItem->setPos(m_afterMovePos);
+}
+
+void MoveItemCommand::undo()
+{
+    m_movedItem->setPos(m_beforeMovePos);
+}
+
 } // end of namespace ADEV

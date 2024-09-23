@@ -38,6 +38,7 @@ private:
     QPushButton* m_laserPenBtn;
     QPushButton* m_eraserBtn;
     QPushButton* m_shapeBtn;
+    QPushButton* m_rubberBandBtn;
     QPushButton* m_undoBtn;
     QPushButton* m_redoBtn;
     QPushButton* m_saveBtn;
