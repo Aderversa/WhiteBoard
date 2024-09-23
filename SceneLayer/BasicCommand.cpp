@@ -179,4 +179,38 @@ void MoveItemCommand::undo()
     m_movedItem->setPos(m_beforeMovePos);
 }
 
+MoveItemsCommand::MoveItemsCommand()
+{
+}
+
+MoveItemsCommand::~MoveItemsCommand()
+{
+}
+
+void MoveItemsCommand::push(const QSharedPointer<MoveItemCommand>& command)
+{
+    m_moveCommandList.push_back(command);
+}
+
+void MoveItemsCommand::redo()
+{
+    for (auto& pCommand : m_moveCommandList)
+    {
+        pCommand->redo();
+    }
+}
+
+void MoveItemsCommand::undo()
+{
+    for (auto& pCommand : m_moveCommandList)
+    {
+        pCommand->undo();
+    }
+}
+
+int MoveItemsCommand::size() const
+{
+    return m_moveCommandList.size();
+}
+
 } // end of namespace ADEV

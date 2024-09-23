@@ -82,6 +82,20 @@ private:
     QPointF m_afterMovePos;
 };
 
+class MoveItemsCommand : public QUndoCommand
+{
+public:
+    MoveItemsCommand();
+    ~MoveItemsCommand();
+    void push(const QSharedPointer<MoveItemCommand>& command);
+    void redo() override;
+    void undo() override;
+    int size() const;
+
+private:
+    QList<QSharedPointer<MoveItemCommand>> m_moveCommandList;
+};
+
 } // end of namespace ADEV
 
 #endif // BASICCOMMAND_H

@@ -28,17 +28,23 @@ BaseGraphicsItemGroup::~BaseGraphicsItemGroup()
         sc = dynamic_cast<WhiteBoardScene*>(scene());
     }
     QList<QGraphicsItem*> items = childItems();
+    MoveItemsCommand* finalCommand = new MoveItemsCommand();
     for (auto& pItem : items)
     {
         removeFromGroup(pItem);
         BaseGraphicsItem* movedItem = dynamic_cast<BaseGraphicsItem*>(pItem);
         if (sc && movedItem) {
-            MoveItemCommand* command = new MoveItemCommand(m_itemMapStartPos[pItem],
-                                                           pItem->pos(),
-                                                           sc->getItem(movedItem));
-            sc->undoStack()->push(command);
+            auto command = QSharedPointer<MoveItemCommand>(
+                                      new MoveItemCommand(m_itemMapStartPos[pItem],
+                                                          pItem->pos(),
+                                                          sc->getItem(movedItem)));
+            finalCommand->push(command);
         }
     }
+    if (sc && finalCommand->size() > 0)
+        sc->undoStack()->push(finalCommand);
+    else
+        delete finalCommand;
 }
 
 
