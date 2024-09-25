@@ -19,11 +19,26 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     , m_saveBtn(new QPushButton(tr("保存到桌面"), this))
     , m_btnLayout(new QHBoxLayout)
     , m_primeLayout(new QVBoxLayout(this))
+    , m_pageLayout(new MultiPageWidget(this))
 {
-    m_scene = scene;
-    m_view = new QGraphicsView(m_scene.get(), this);
-    m_view->setSceneRect(m_scene->sceneRect());
-    m_view->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    int n = 10;
+    QImage image(QString(":/BackgroundImages/3.png"));
+    for (int i = 0; i < n; i++)
+    {
+        BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());
+        WhiteBoardScene* m_scene = new WhiteBoardScene(backgroundItem);
+        QRectF rect(0, 0, 1024, 512);
+        m_scene->setSceneRect(rect);
+        connect(m_normalPenBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useNormalPen);
+        connect(m_hightlightPenBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useHighlightPen);
+        connect(m_laserPenBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useLaserPen);
+        connect(m_eraserBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useEraser);
+        connect(m_shapeBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useShapePen);
+        connect(m_rubberBandBtn, &QPushButton::clicked, m_scene, &WhiteBoardScene::useRubberBand);
+        connect(m_undoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::undo);
+        connect(m_redoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::redo);
+        m_pageLayout->addScene(m_scene);
+    }
     m_btnLayout->addWidget(m_normalPenBtn);
     m_btnLayout->addWidget(m_hightlightPenBtn);
     m_btnLayout->addWidget(m_laserPenBtn);
@@ -34,47 +49,7 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene *scene, QWidget *parent)
     m_btnLayout->addWidget(m_redoBtn);
     m_btnLayout->addWidget(m_saveBtn);
     m_primeLayout->addLayout(m_btnLayout);
-    m_primeLayout->addWidget(m_view);
-
-    connect(m_normalPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToNormalPen);
-    connect(m_hightlightPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToHighlightPen);
-    connect(m_laserPenBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToLaserPen);
-    connect(m_eraserBtn, &QPushButton::clicked, this, &WhiteBoardView::changeToEraser);
-    connect(m_shapeBtn, &QPushButton::clicked, m_scene.get(), &WhiteBoardScene::useShapePen);
-    connect(m_rubberBandBtn, &QPushButton::clicked, m_scene.get(), &WhiteBoardScene::useRubberBand);
-    connect(m_undoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::undo);
-    connect(m_redoBtn, &QPushButton::clicked, m_scene->undoStack().get(), &QUndoStack::redo);
-    connect(m_scene->undoStack().get(), &QUndoStack::indexChanged, this, &WhiteBoardView::printIndex);
-    connect(m_saveBtn, &QPushButton::clicked, this, &WhiteBoardView::save);
-
-}
-
-void WhiteBoardView::changeToNormalPen()
-{
-    m_scene->useNormalPen();
-}
-
-void WhiteBoardView::changeToHighlightPen()
-{
-    m_scene->useHighlightPen();
-}
-
-void WhiteBoardView::changeToLaserPen()
-{
-    m_scene->useLaserPen();
-}
-
-void WhiteBoardView::changeToEraser()
-{
-    m_scene->useEraser();
-}
-
-void WhiteBoardView::save()
-{
-    QImage image(m_scene->sceneRect().size().toSize(), QImage::Format_ARGB32);
-    QPainter painter(&image);
-    m_scene->render(&painter);
-    image.save(tr("E://Desktop//whiteboard.png"));
+    m_primeLayout->addWidget(m_pageLayout);
 }
 
 void WhiteBoardView::printIndex(int index)

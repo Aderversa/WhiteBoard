@@ -17,6 +17,8 @@ SOURCES += \
     SceneLayer/BackgroundItem.cpp \
     SceneLayer/BasicCommand.cpp \
     SceneLayer/WhiteBoardScene.cpp \
+    ViewLayer/MultiPageLayout.cpp \
+    ViewLayer/MultiPageWidget.cpp \
     ViewLayer/WhiteBoardView.cpp \
     ViewLayer/WhiteBoardViewer.cpp \
     main.cpp \
@@ -32,6 +34,8 @@ HEADERS += \
     SceneLayer/BackgroundItem.h \
     SceneLayer/BasicCommand.h \
     SceneLayer/WhiteBoardScene.h \
+    ViewLayer/MultiPageLayout.h \
+    ViewLayer/MultiPageWidget.h \
     ViewLayer/WhiteBoardView.h \
     ViewLayer/WhiteBoardViewer.h \
     WhiteBoard.h
