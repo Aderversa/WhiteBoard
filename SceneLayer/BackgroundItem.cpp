@@ -30,6 +30,11 @@ void BackgroundItem::setColor(QColor color)
     emit colorChanged(m_color);
 }
 
+void BackgroundItem::resize(QSizeF size)
+{
+    m_size = size;
+}
+
 QRectF BackgroundItem::boundingRect() const
 {
     return QRectF(0, 0, m_size.width(), m_size.height());
@@ -76,11 +81,17 @@ BackgroundImageItem::BackgroundImageItem(const QImage& image, const QSizeF& imag
 {
 }
 
+void BackgroundImageItem::resize(QSizeF size)
+{
+    BackgroundItem::resize(size);
+}
+
 void BackgroundImageItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    painter->drawImage(QPointF(0, 0), m_image);
+    QImage drawImg = m_image.scaled(size().toSize(), Qt::KeepAspectRatio);
+    painter->drawImage(QPointF(0, 0), drawImg);
 }
 // end of BackgroundImageItem
 
@@ -91,6 +102,11 @@ BackgroundPathItem::BackgroundPathItem(const QPainterPath& path, QGraphicsItem* 
 {
 }
 
+void BackgroundPathItem::resize(QSizeF size)
+{
+    BackgroundItem::resize(size);
+}
+
 void BackgroundPathItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
@@ -98,6 +114,13 @@ void BackgroundPathItem::paint(QPainter *painter, const QStyleOptionGraphicsItem
     QPen pen;
     pen.setColor(Qt::black);
     pen.setStyle(Qt::SolidLine);
+    QPixmap pix(boundingRect().size().toSize());
+    QPainter pter(&pix);
+    pter.setPen(pen);
+    pter.drawPath(m_path);
+    pter.end();
+    pix = pix.scaled(size().toSize(), Qt::KeepAspectRatio);
+    painter->drawPixmap(QPointF(0,0), pix);
 }
 // end of BackgroundPathItem
 } // end of namespace ADEV

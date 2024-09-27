@@ -1,19 +1,21 @@
 #ifndef MULTIPAGELAYOUT_H
 #define MULTIPAGELAYOUT_H
 
+#include <QWidget>
 #include <QLayout>
+#include <QList>
 
 namespace ADEV {
+
 class MultiPageLayout : public QLayout
 {
     Q_OBJECT
 public:
-    MultiPageLayout(QMargins margins, int pageSpacing, QWidget *parent = nullptr);
+    MultiPageLayout(QWidget *parent = nullptr);
     ~MultiPageLayout();
 
+    // 通过 QLayout 继承
     QSize sizeHint() const override;
-
-    void addWidget(QWidget* w);
 
     void addItem(QLayoutItem* item) override;
 
@@ -25,26 +27,20 @@ public:
 
     void setGeometry(const QRect& rect) override;
 
-    // dx > 0 整体右移; dx < 0 整体左移
-    void moveX(int dx);
-    // dy > 0 整体下移; dy < 0 整体上移
+    void doLayout();
+
     void moveY(int dy);
 
-    qreal zoomFactor() const { return m_zoomFactor; }
-    void setZoomFactor(qreal factor);
+    qreal zoomFactor() const { return zoomFactor_; }
+    void setZoomFactor(qreal factor, QPoint zoomPos = QPoint());
 
 private:
-    void calculateSize();
-
-private:
-    QMargins margins;
-    int pageSpacing;
+    QList<QPair<QLayoutItem*, QSize>> items;
     QPoint offset;
-    QSize pageSize;
-    QList<QLayoutItem*> itemList;
     QSize virtualSize;
-    qreal m_zoomFactor;
+    qreal zoomFactor_;
 };
+
 } // ADEV
 
 #endif // MULTIPAGELAYOUT_H

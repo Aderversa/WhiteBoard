@@ -13,6 +13,7 @@ public: // getter或setter
     QSizeF size() const;
     QColor color() const;
     void setColor(QColor color);
+    virtual void resize(QSizeF size);
 
 public: // 来自QGraphicsItem
     QRectF boundingRect() const;
@@ -40,6 +41,7 @@ class BackgroundImageItem : public BackgroundItem
 {
 public:
     BackgroundImageItem(const QImage& image, const QSizeF& imageSize);
+    void resize(QSizeF size) override;
 
 public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -52,6 +54,7 @@ class BackgroundPathItem : public BackgroundItem
 {
 public:
     BackgroundPathItem(const QPainterPath& path, QGraphicsItem* parent = nullptr);
+    void resize(QSizeF size) override;
 
 public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);

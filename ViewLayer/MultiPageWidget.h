@@ -2,24 +2,26 @@
 #define MULTIPAGEWIDGET_H
 
 #include <QWidget>
-#include "MultiPageLayout.h"
-#include "SceneLayer/WhiteBoardScene.h"
 
 namespace ADEV {
+
+class MultiPageLayout;
 
 class MultiPageWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MultiPageWidget(QWidget *parent = nullptr);
-    void addScene(WhiteBoardScene* scene);
+    MultiPageWidget(QWidget* parent = nullptr);
+    ~MultiPageWidget();
+    void addWidget(QWidget* w);
 
 protected:
-    void wheelEvent(QWheelEvent* event);
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
-    MultiPageLayout* m_pageLayout;
+    MultiPageLayout* pageLayout;
 };
+
 
 } // ADEV
 #endif // MULTIPAGEWIDGET_H

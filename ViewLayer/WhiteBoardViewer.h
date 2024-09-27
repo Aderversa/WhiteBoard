@@ -1,19 +1,43 @@
 #ifndef WHITEBOARDVIEWER_H
 #define WHITEBOARDVIEWER_H
+#include "ViewLayer/MultiPageWidget.h"
 
-#include <QAbstractScrollArea>
+#include <QWidget>
+#include <QPointer>
 
-namespace ADEV {
+class QHBoxLayout;
+class QVBoxLayout;
+class QPushButton;
 
-class WhiteBoardViewer : public QAbstractScrollArea
+namespace ADEV
+{
+
+class WhiteBoardScene;
+class SceneController;
+
+class WhiteBoardViewer : public QWidget
 {
     Q_OBJECT
 public:
     WhiteBoardViewer(QWidget* parent = nullptr);
+    ~WhiteBoardViewer();
+    void addPage(WhiteBoardScene* page);
 
-protected:
-    void paintEvent(QPaintEvent *) override;
-    void scrollContentsBy(int dx, int dy) override;
+private:
+    QPointer<SceneController> m_sceneController;
+    QPointer<MultiPageWidget> m_pagesWidget;
+
+    QPushButton* m_normal;
+    QPushButton* m_highlight;
+    QPushButton* m_laser;
+    QPushButton* m_eraser;
+    QPushButton* m_shape;
+    QPushButton* m_rubberBand;
+    QPushButton* m_undo;
+    QPushButton* m_redo;
+
+    QHBoxLayout* m_btnsLayout;
+    QVBoxLayout* m_primeLayout;
 };
 
 } // end of ADEV

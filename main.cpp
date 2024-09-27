@@ -60,10 +60,13 @@ int main(int argc, char** argv)
     using namespace ADEV;
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     QApplication a(argc, argv);
-    // QImage image(QString(":/BackgroundImages/3.png"));
-    // BackgroundImageItem* backgroundItem = new BackgroundImageItem(image, image.size());
-    WhiteBoardScene scene(nullptr);
-    WhiteBoardView view(&scene);
-    view.show();
+    WhiteBoardViewer w;
+    int n = 10;
+    for (int i = 0; i < n; ++i)
+    {
+        WhiteBoardScene* s = new WhiteBoardScene(nullptr);
+        w.addPage(s);
+    }
+    w.show();
     return a.exec();
 }
