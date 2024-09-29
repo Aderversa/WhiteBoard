@@ -24,12 +24,6 @@ WhiteBoardScene::~WhiteBoardScene()
 {
 }
 
-void WhiteBoardScene::resize(QSizeF size)
-{
-    m_backgroundItem->resize(size);
-    setSceneRect(QRectF(QPointF(0, 0), m_backgroundItem->size()));
-}
-
 void WhiteBoardScene::inputDevicePress(const QPointF& startPos)
 {
     // 需要将不同的工具的处理逻辑进行分离

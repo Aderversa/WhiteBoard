@@ -14,11 +14,6 @@ BackgroundItem::BackgroundItem(QColor color, const QSizeF& size, QGraphicsItem* 
     setZValue(-1); // 背景的Z值，需要Scene保证该值为Item中最小的Z值
 }
 
-QSizeF BackgroundItem::size() const
-{
-    return m_size;
-}
-
 QColor BackgroundItem::color() const
 {
     return m_color;
@@ -28,11 +23,6 @@ void BackgroundItem::setColor(QColor color)
 {
     m_color = color;
     emit colorChanged(m_color);
-}
-
-void BackgroundItem::resize(QSizeF size)
-{
-    m_size = size;
 }
 
 QRectF BackgroundItem::boundingRect() const
@@ -81,17 +71,11 @@ BackgroundImageItem::BackgroundImageItem(const QImage& image, const QSizeF& imag
 {
 }
 
-void BackgroundImageItem::resize(QSizeF size)
-{
-    BackgroundItem::resize(size);
-}
-
 void BackgroundImageItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    QImage drawImg = m_image.scaled(size().toSize(), Qt::KeepAspectRatio);
-    painter->drawImage(QPointF(0, 0), drawImg);
+    painter->drawImage(QPointF(0, 0), m_image);
 }
 // end of BackgroundImageItem
 
@@ -102,25 +86,11 @@ BackgroundPathItem::BackgroundPathItem(const QPainterPath& path, QGraphicsItem* 
 {
 }
 
-void BackgroundPathItem::resize(QSizeF size)
-{
-    BackgroundItem::resize(size);
-}
-
 void BackgroundPathItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
-    QPen pen;
-    pen.setColor(Qt::black);
-    pen.setStyle(Qt::SolidLine);
-    QPixmap pix(boundingRect().size().toSize());
-    QPainter pter(&pix);
-    pter.setPen(pen);
-    pter.drawPath(m_path);
-    pter.end();
-    pix = pix.scaled(size().toSize(), Qt::KeepAspectRatio);
-    painter->drawPixmap(QPointF(0,0), pix);
+    painter->drawPath(m_path);
 }
 // end of BackgroundPathItem
 } // end of namespace ADEV

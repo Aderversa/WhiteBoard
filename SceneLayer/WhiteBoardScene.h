@@ -31,7 +31,6 @@ public:
     void addItem(const QSharedPointer<BaseGraphicsItem>& pItem);
     void addItem(QGraphicsItem* item);
     QSharedPointer<BaseGraphicsItem> getItem(BaseGraphicsItem* pItem) ;
-    void resize(QSizeF size);
 
 private: // 对实际事件的抽象处理
     void inputDevicePress(const QPointF& startPos);

@@ -2,6 +2,7 @@
 #include "SceneLayer/WhiteBoardScene.h"
 
 #include <QResizeEvent>
+#include <QScrollBar>
 
 namespace ADEV
 {
@@ -10,14 +11,17 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene* scene, QWidget* parent)
     : QGraphicsView(scene, parent)
 {
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    horizontalScrollBar()->hide();
+    verticalScrollBar()->hide();
 }
 
 void WhiteBoardView::resizeEvent(QResizeEvent *event)
 {
-    WhiteBoardScene* m_scene = dynamic_cast<WhiteBoardScene*>(scene());
-    if (m_scene)
+    Q_UNUSED(event);
+    WhiteBoardScene* ws = dynamic_cast<WhiteBoardScene*>(scene());
+    if (ws)
     {
-        m_scene->resize(event->size().toSizeF());
+        this->fitInView(ws->sceneRect(), Qt::KeepAspectRatio);
     }
 }
 
