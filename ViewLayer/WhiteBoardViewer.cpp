@@ -4,6 +4,7 @@
 #include "SceneLayer/WhiteBoardScene.h"
 #include "SceneLayer/SceneController.h"
 
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>

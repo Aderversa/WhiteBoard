@@ -23,6 +23,9 @@ public:
     void useShapePen();
     void useRubberBand();
 
+public slots:
+    void reloadToolSettings();
+
 signals:
     void toolChanged();
 
@@ -65,6 +68,7 @@ public:
     virtual void devicePress(WhiteBoardScene* scene, const QPointF& startPos) = 0;
     virtual void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) = 0;
     virtual void deviceRelease(WhiteBoardScene* scene) = 0;
+    virtual void loadSettings() = 0;
 
 private:
     QPointer<SceneController> m_controller;
@@ -76,6 +80,7 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
 
 private:
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
@@ -92,6 +97,7 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
 
 private:
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
@@ -111,6 +117,7 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
 
 private:
     LaserStrokeTempList m_laserItemTempList;
@@ -127,6 +134,7 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
 
 public: // 碰撞处理
     void handleCollidingItems(WhiteBoardScene* scene,
@@ -160,6 +168,7 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
 
 private slots:
     void destroyObserver();
@@ -183,6 +192,8 @@ public:
     void devicePress(WhiteBoardScene* scene, const QPointF& startPos) override;
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
+    void loadSettings() override;
+
 
 private slots:
     void destroyGroup();

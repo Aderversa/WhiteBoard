@@ -29,7 +29,8 @@ public:
 
     void doLayout();
 
-    void moveY(int dy);
+    void setY(int dy);
+    void setX(int dx);
 
     qreal zoomFactor() const { return zoomFactor_; }
     void setZoomFactor(qreal factor, QPoint zoomPos = QPoint());

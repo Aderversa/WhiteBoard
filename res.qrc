@@ -3,5 +3,7 @@
         <file>BackgroundImages/1.jpg</file>
         <file>BackgroundImages/2.png</file>
         <file>BackgroundImages/3.png</file>
+        <file>Books/test.pdf</file>
+        <file>Books/book1.pdf</file>
     </qresource>
 </RCC>

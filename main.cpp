@@ -2,6 +2,8 @@
 
 #include <QApplication>
 #include <QGraphicsView>
+#include <QPdfDocument>
+#include <QScreen>
 
 #include "SceneLayer/WhiteBoardScene.h"
 #include "ViewLayer/WhiteBoardViewer.h"
@@ -58,13 +60,17 @@ int testForCurve(int argc, char* argv[])
 int main(int argc, char** argv)
 {
     using namespace ADEV;
+    QCoreApplication::setOrganizationName("Aderversa");
+    QCoreApplication::setApplicationName("Aderversa WhiteBoard");
     QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
     QApplication a(argc, argv);
     WhiteBoardViewer w;
     int n = 10;
     for (int i = 0; i < n; ++i)
     {
-        WhiteBoardScene* s = new WhiteBoardScene(nullptr);
+        QImage img(QString(":/BackgroundImages/1.jpg"));
+        BackgroundImageItem* background = new BackgroundImageItem(img, img.size());
+        WhiteBoardScene* s = new WhiteBoardScene(nullptr, background);
         w.addPage(s);
     }
     w.show();

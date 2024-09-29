@@ -11,13 +11,12 @@ WhiteBoardView::WhiteBoardView(WhiteBoardScene* scene, QWidget* parent)
     : QGraphicsView(scene, parent)
 {
     setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-    horizontalScrollBar()->hide();
-    verticalScrollBar()->hide();
+    setSceneRect(scene->sceneRect());
 }
 
 void WhiteBoardView::resizeEvent(QResizeEvent *event)
 {
-    Q_UNUSED(event);
+    QGraphicsView::resizeEvent(event);
     WhiteBoardScene* ws = dynamic_cast<WhiteBoardScene*>(scene());
     if (ws)
     {

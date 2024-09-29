@@ -8,6 +8,7 @@ MultiPageLayout::MultiPageLayout(QWidget* parent)
     : QLayout(parent)
     , offset(0, 0)
     , zoomFactor_(1.0)
+    , virtualSize(0, 0)
 {
     setSpacing(5);
     setContentsMargins(QMargins(5, 5, 5, 5));
@@ -56,9 +57,15 @@ int MultiPageLayout::count() const
     return items.size();
 }
 
-void MultiPageLayout::moveY(int dy)
+void MultiPageLayout::setY(int dy)
 {
-    offset.setY(offset.y() + dy);
+    offset.setY(-dy);
+    doLayout();
+}
+
+void MultiPageLayout::setX(int dx)
+{
+    offset.setY(-dx);
     doLayout();
 }
 

@@ -1,4 +1,5 @@
 #include "SceneController.h"
+#include "Config/WhiteBoardSettings.h"
 
 #include <QTimer>
 #include <QUndoStack>
@@ -15,6 +16,11 @@ SceneController::SceneController(QObject *parent)
 QSharedPointer<WhiteBoardAbstractTool> SceneController::tool() const
 {
     return m_tool;
+}
+
+void SceneController::reloadToolSettings()
+{
+    m_tool->loadSettings();
 }
 
 void SceneController::useNormalPen()
@@ -72,9 +78,16 @@ void SceneController::useRubberBand()
 
 WhiteBoardNormalPen::WhiteBoardNormalPen(SceneController* controller)
     : WhiteBoardAbstractTool(controller)
-    , m_width(4)
-    , m_color(Qt::red)
 {
+    loadSettings();
+}
+
+void WhiteBoardNormalPen::loadSettings()
+{
+    WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
+    QString prefix("Tools/NormalPen/");
+    m_width = settings.value(prefix + "width", 4).value<qreal>();
+    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
 }
 
 void WhiteBoardNormalPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -118,6 +131,16 @@ WhiteBoardHighlightPen::WhiteBoardHighlightPen(SceneController* controller)
 {
 }
 
+void WhiteBoardHighlightPen::loadSettings()
+{
+    WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
+    QString prefix("Tools/HighlightPen/");
+    m_color = settings.value(prefix + "color", QColor(Qt::yellow)).value<QColor>();
+    m_width = settings.value(prefix + "width", 20).value<qreal>();
+    m_opacity = settings.value(prefix + "opacity", 0.5).value<qreal>();
+    m_openStraightLineMode = settings.value(prefix + "openStraightLineMode", false).toBool();
+}
+
 void WhiteBoardHighlightPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
 {
     m_eventTempItem = QSharedPointer<BaseGraphicsItem>(new BaseGraphicsItem(m_width, QBrush(m_color)));
@@ -159,10 +182,17 @@ void WhiteBoardHighlightPen::deviceRelease(WhiteBoardScene* scene)
 
 WhiteBoardLaserPen::WhiteBoardLaserPen(SceneController* controller)
     : WhiteBoardAbstractTool(controller)
-    , m_color(Qt::red)
-    , m_laserItemTempList(4)
+    , m_laserItemTempList(3)
 {
     connect(controller, &SceneController::toolChanged, &m_laserItemTempList, &LaserStrokeTempList::toolChanged);
+    loadSettings();
+}
+
+void WhiteBoardLaserPen::loadSettings()
+{
+    WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
+    QString prefix("Tools/LaserPen/");
+    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
 }
 
 void WhiteBoardLaserPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -203,9 +233,16 @@ void WhiteBoardLaserPen::deviceRelease(WhiteBoardScene* scene)
 
 WhiteBoardEraser::WhiteBoardEraser(SceneController* controller)
     : WhiteBoardAbstractTool(controller)
-    , m_radius(60)
-    , m_eraseWholeItem(false)
 {
+    loadSettings();
+}
+
+void WhiteBoardEraser::loadSettings()
+{
+    WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
+    QString prefix("Tools/Eraser/");
+    m_radius = settings.value(prefix + "radius", 100).value<qreal>();
+    m_eraseWholeItem = settings.value(prefix + "eraseWholeItem", false).toBool();
 }
 
 void WhiteBoardEraser::handleCollidingItems(WhiteBoardScene* scene,
@@ -350,7 +387,7 @@ void LaserStrokeTempList::startTimer()
 void LaserStrokeTempList::handleTimeout()
 {
     int remainCount = m_countdown - m_countTimes;
-    qreal opacity = remainCount / 1000.0;
+    qreal opacity = remainCount / 500.0;
     if (opacity > 1) {
         remainCount = 1;
     }
@@ -384,11 +421,18 @@ void LaserStrokeTempList::toolChanged()
 
 WhiteBoardShapePen::WhiteBoardShapePen(SceneController* controller)
     : WhiteBoardAbstractTool(controller)
-    , m_width(6)
-    , m_opacity(1)
-    , m_color(Qt::red)
-    , m_shape(Ellipse)
 {
+    loadSettings();
+}
+
+void WhiteBoardShapePen::loadSettings()
+{
+    WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
+    QString prefix("Tools/ShapePen/");
+    m_width = settings.value(prefix + "width", 6).value<qreal>();
+    m_opacity = settings.value(prefix + "opacity", 1).value<qreal>();
+    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
+    m_shape = settings.value(prefix + "shape", Rectangle).value<WhiteBoardShapePen::ItemShape>();
 }
 
 void WhiteBoardShapePen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -453,6 +497,11 @@ void WhiteBoardShapePen::destroyObserver()
 WhiteBoardRubberBand::WhiteBoardRubberBand(SceneController* controller)
     : WhiteBoardAbstractTool(controller)
 {
+    loadSettings();
+}
+
+void WhiteBoardRubberBand::loadSettings()
+{
 }
 
 void WhiteBoardRubberBand::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -481,7 +530,6 @@ void WhiteBoardRubberBand::deviceRelease(WhiteBoardScene* scene)
 {
     m_group->complete();
     QList<QGraphicsItem*> items = scene->collidingItems(m_group.get(), Qt::IntersectsItemShape);
-    qDebug() << items.size();
     if (items.empty()) {
         m_group.reset(nullptr);
     }

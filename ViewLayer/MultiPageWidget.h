@@ -2,6 +2,7 @@
 #define MULTIPAGEWIDGET_H
 
 #include <QWidget>
+#include <QScrollBar>
 
 namespace ADEV {
 
@@ -17,9 +18,15 @@ public:
 
 protected:
     void wheelEvent(QWheelEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+
+private:
+    void updateScrollBars();
 
 private:
     MultiPageLayout* pageLayout;
+    QScrollBar hBar;
+    QScrollBar vBar;
 };
 
 
