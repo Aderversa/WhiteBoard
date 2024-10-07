@@ -82,6 +82,12 @@ public:
     void deviceRelease(WhiteBoardScene* scene) override;
     void loadSettings() override;
 
+public:
+    static constexpr char COLOR_KEY[] = "Tools/NormalPen/color";
+    static constexpr char WIDTH_KEY[] = "Tools/NormalPen/width";
+    static constexpr qreal DEFAULT_WIDTH = 3.0;
+    static constexpr Qt::GlobalColor DEFAULT_COLOR = Qt::red;
+
 private:
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
     QSharedPointer<ControlCurveObserver> m_curveObserver = nullptr;
@@ -98,6 +104,15 @@ public:
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
     void loadSettings() override;
+public:
+    static constexpr char COLOR_KEY[] = "Tools/HighlightPen/color";
+    static constexpr char WIDTH_KEY[] = "Tools/HighlightPen/width";
+    static constexpr char OPACITY_KEY[] = "Tools/HighlightPen/opacity";
+    static constexpr char MODE_KEY[] = "Tools/HighlightPen/openStraightLineMode";
+    static constexpr qreal DEFAULT_WIDTH = 3.0;
+    static constexpr Qt::GlobalColor DEFAULT_COLOR = Qt::red;
+    static constexpr qreal DEFAULT_OPACITY = 1.0;
+    static constexpr bool DEFAULT_STARIGHT_LINE_MODE = false;
 
 private:
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
@@ -118,6 +133,10 @@ public:
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
     void loadSettings() override;
+
+public:
+    static constexpr char COLOR_KEY[] = "Tools/LaserPen/color";
+    static constexpr Qt::GlobalColor DEFAULT_COLOR = Qt::red;
 
 private:
     LaserStrokeTempList m_laserItemTempList;
@@ -145,6 +164,12 @@ public: // 碰撞处理
                                   const QPainterPath& collidesArea,
                                   const QSharedPointer<BaseGraphicsItem>& pointer);
 
+public:
+    constexpr static char RADIUS_KEY[] = "Tools/Eraser/radius";
+    static constexpr char ERASE_WHOLE_KEY[] = "Tools/Eraser/eraseWholeItem";
+    static constexpr qreal DEFAULT_RADIUS = 100;
+    static constexpr bool DEFAULT_ERASE_WHOLE = false;
+
 private:
     EraseItemsCommand* m_eraseItemsCommand = nullptr;
     QSharedPointer<BaseGraphicsItem> m_eventTempItem = nullptr;
@@ -169,6 +194,16 @@ public:
     void deviceMove(WhiteBoardScene* scene, const QPointF& scenePos, const QPointF& lastScenePos) override;
     void deviceRelease(WhiteBoardScene* scene) override;
     void loadSettings() override;
+
+public:
+    static constexpr char COLOR_KEY[] = "Tools/ShapePen/color";
+    static constexpr char WIDTH_KEY[] = "Tools/ShapePen/width";
+    static constexpr char OPACITY_KEY[] = "Tools/ShapePen/opacity";
+    static constexpr char SHAPE_KEY[] = "Tools/ShapePen/shape";
+    static constexpr qreal DEFAULT_WIDTH = 3.0;
+    static constexpr Qt::GlobalColor DEFAULT_COLOR = Qt::red;
+    static constexpr qreal DEFAULT_OPACITY = 1.0;
+    static constexpr ItemShape DEFAULT_SHAPE = Rectangle;
 
 private slots:
     void destroyObserver();

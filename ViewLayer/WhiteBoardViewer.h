@@ -23,6 +23,13 @@ public:
     ~WhiteBoardViewer();
     void addPage(WhiteBoardScene* page);
 
+private slots:
+    void openNormalDialog();
+    void openHighlightDialog();
+    void openLaserDialog();
+    void openEraserDialog();
+    void openShapeDialog();
+
 private:
     QPointer<SceneController> m_sceneController;
     QPointer<MultiPageWidget> m_pagesWidget;
@@ -35,6 +42,12 @@ private:
     QPushButton* m_rubberBand;
     QPushButton* m_undo;
     QPushButton* m_redo;
+
+    QPushButton* m_normalDialog;
+    QPushButton* m_highlightDialog;
+    QPushButton* m_laserDialog;
+    QPushButton* m_eraserDialog;
+    QPushButton* m_shapeDialog;
 
     QHBoxLayout* m_btnsLayout;
     QVBoxLayout* m_primeLayout;

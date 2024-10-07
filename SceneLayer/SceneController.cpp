@@ -85,9 +85,8 @@ WhiteBoardNormalPen::WhiteBoardNormalPen(SceneController* controller)
 void WhiteBoardNormalPen::loadSettings()
 {
     WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
-    QString prefix("Tools/NormalPen/");
-    m_width = settings.value(prefix + "width", 4).value<qreal>();
-    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
+    m_width = settings.value(WIDTH_KEY, DEFAULT_WIDTH).value<qreal>();
+    m_color = settings.value(COLOR_KEY, QColor(DEFAULT_COLOR)).value<QColor>();
 }
 
 void WhiteBoardNormalPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -134,11 +133,10 @@ WhiteBoardHighlightPen::WhiteBoardHighlightPen(SceneController* controller)
 void WhiteBoardHighlightPen::loadSettings()
 {
     WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
-    QString prefix("Tools/HighlightPen/");
-    m_color = settings.value(prefix + "color", QColor(Qt::yellow)).value<QColor>();
-    m_width = settings.value(prefix + "width", 20).value<qreal>();
-    m_opacity = settings.value(prefix + "opacity", 0.5).value<qreal>();
-    m_openStraightLineMode = settings.value(prefix + "openStraightLineMode", false).toBool();
+    m_color = settings.value(COLOR_KEY, QColor(DEFAULT_COLOR)).value<QColor>();
+    m_width = settings.value(WIDTH_KEY, DEFAULT_WIDTH).value<qreal>();
+    m_opacity = settings.value(OPACITY_KEY, DEFAULT_OPACITY).value<qreal>();
+    m_openStraightLineMode = settings.value(MODE_KEY, DEFAULT_STARIGHT_LINE_MODE).toBool();
 }
 
 void WhiteBoardHighlightPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -191,8 +189,7 @@ WhiteBoardLaserPen::WhiteBoardLaserPen(SceneController* controller)
 void WhiteBoardLaserPen::loadSettings()
 {
     WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
-    QString prefix("Tools/LaserPen/");
-    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
+    m_color = settings.value(COLOR_KEY, QColor(DEFAULT_COLOR)).value<QColor>();
 }
 
 void WhiteBoardLaserPen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)
@@ -240,9 +237,8 @@ WhiteBoardEraser::WhiteBoardEraser(SceneController* controller)
 void WhiteBoardEraser::loadSettings()
 {
     WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
-    QString prefix("Tools/Eraser/");
-    m_radius = settings.value(prefix + "radius", 100).value<qreal>();
-    m_eraseWholeItem = settings.value(prefix + "eraseWholeItem", false).toBool();
+    m_radius = settings.value(RADIUS_KEY, DEFAULT_RADIUS).value<qreal>();
+    m_eraseWholeItem = settings.value(ERASE_WHOLE_KEY, DEFAULT_ERASE_WHOLE).toBool();
 }
 
 void WhiteBoardEraser::handleCollidingItems(WhiteBoardScene* scene,
@@ -428,11 +424,10 @@ WhiteBoardShapePen::WhiteBoardShapePen(SceneController* controller)
 void WhiteBoardShapePen::loadSettings()
 {
     WhiteBoardSettings& settings = WhiteBoardSettings::getInstance();
-    QString prefix("Tools/ShapePen/");
-    m_width = settings.value(prefix + "width", 6).value<qreal>();
-    m_opacity = settings.value(prefix + "opacity", 1).value<qreal>();
-    m_color = settings.value(prefix + "color", QColor(Qt::red)).value<QColor>();
-    m_shape = settings.value(prefix + "shape", Rectangle).value<WhiteBoardShapePen::ItemShape>();
+    m_width = settings.value(WIDTH_KEY, DEFAULT_WIDTH).value<qreal>();
+    m_opacity = settings.value(OPACITY_KEY, DEFAULT_OPACITY).value<qreal>();
+    m_color = settings.value(COLOR_KEY, QColor(DEFAULT_COLOR)).value<QColor>();
+    m_shape = settings.value(SHAPE_KEY, DEFAULT_SHAPE).value<WhiteBoardShapePen::ItemShape>();
 }
 
 void WhiteBoardShapePen::devicePress(WhiteBoardScene* scene, const QPointF& startPos)

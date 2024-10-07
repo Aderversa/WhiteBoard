@@ -19,6 +19,11 @@ SOURCES += \
     SceneLayer/BasicCommand.cpp \
     SceneLayer/SceneController.cpp \
     SceneLayer/WhiteBoardScene.cpp \
+    ToolsDialog/EraserDialog.cpp \
+    ToolsDialog/HighlightPenDialog.cpp \
+    ToolsDialog/LaserPenDialog.cpp \
+    ToolsDialog/NormalPenDialog.cpp \
+    ToolsDialog/ShapePenDialog.cpp \
     ViewLayer/MultiPageLayout.cpp \
     ViewLayer/MultiPageWidget.cpp \
     ViewLayer/WhiteBoardView.cpp \
@@ -38,6 +43,11 @@ HEADERS += \
     SceneLayer/BasicCommand.h \
     SceneLayer/SceneController.h \
     SceneLayer/WhiteBoardScene.h \
+    ToolsDialog/EraserDialog.h \
+    ToolsDialog/HighlightPenDialog.h \
+    ToolsDialog/LaserPenDialog.h \
+    ToolsDialog/NormalPenDialog.h \
+    ToolsDialog/ShapePenDialog.h \
     ViewLayer/MultiPageLayout.h \
     ViewLayer/MultiPageWidget.h \
     ViewLayer/WhiteBoardView.h \
